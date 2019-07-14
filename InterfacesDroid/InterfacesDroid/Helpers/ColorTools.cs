@@ -1,0 +1,36 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+using Android.App;
+using Android.Content;
+using Android.OS;
+using Android.Runtime;
+using Android.Views;
+using Android.Widget;
+using Android.Graphics;
+
+namespace InterfacesDroid.Helpers
+{
+    public static class ColorTools
+    {
+        public static Color GetColor(byte[] colorArray)
+        {
+            if (colorArray == null)
+                return default(Color);
+
+            if (colorArray.Length == 3)
+                return new Color(colorArray[0], colorArray[1], colorArray[2]);
+            else if (colorArray.Length == 4)
+                return new Color(r: colorArray[1], g: colorArray[2], b: colorArray[3], a: colorArray[0]);
+
+            return default(Color);
+        }
+
+        public static byte[] ToArray(Color color)
+        {
+            return new byte[] { color.R, color.G, color.B };
+        }
+    }
+}
