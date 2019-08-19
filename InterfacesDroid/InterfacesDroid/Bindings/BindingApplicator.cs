@@ -539,6 +539,28 @@ namespace BareMvvm.Core.Bindings
                 {
                     sourcePropertyValue = sourcePropertyValue.ToString();
                 }
+                else if (property.PropertyType == typeof(Android.Views.ViewStates))
+                {
+                    if (!(sourcePropertyValue is Android.Views.ViewStates))
+                    {
+                        // Implicit visibility converter
+                        bool? shouldBeVisible = null;
+                        if (sourcePropertyValue is bool boolean)
+                        {
+                            shouldBeVisible = boolean;
+                        }
+                        else
+                        {
+                            // If not null, visible
+                            shouldBeVisible = sourcePropertyValue != null;
+                        }
+
+                        if (shouldBeVisible != null)
+                        {
+                            sourcePropertyValue = shouldBeVisible.Value ? Android.Views.ViewStates.Visible : Android.Views.ViewStates.Gone;
+                        }
+                    }
+                }
 
                 if (targetProperty.DeclaringType == typeof(TextViewStrikethroughWrapper))
                 {
