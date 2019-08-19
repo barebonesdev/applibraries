@@ -320,7 +320,18 @@ namespace InterfacesiOS.Binding
         {
             SetBinding(propertyName, delegate
             {
-                visibilityContainer.IsVisible = (bool)BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject);
+                var value = BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject);
+                bool boolean;
+                if (value is bool b)
+                {
+                    boolean = b;
+                }
+                else
+                {
+                    boolean = value != null;
+                }
+
+                visibilityContainer.IsVisible = boolean;
             });
         }
 
