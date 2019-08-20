@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>BareBonesDev.InterfacesUwp</id>
+        <version>1.0.0</version>
+        <title>BareBonesDev.InterfacesUwp</title>
+        <authors>BareBones Dev</authors>
+        <owners>BareBones Dev</owners>
+        <projectUrl>https://github.com/barebonesdev/applibraries</projectUrl>
+        <licenseUrl>https://github.com/barebonesdev/applibraries/blob/master/LICENSE</licenseUrl>
+        <requireLicenseAcceptance>true</requireLicenseAcceptance>
+        <description>Common UWP interfaces used in my apps</description>
+        <copyright>Copyright ©  2012</copyright>
+    </metadata>
+</package>
