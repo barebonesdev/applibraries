@@ -31,9 +31,15 @@
     <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BareMvvm.Core, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\BareMvvm.Core.1.190820.1\lib\portable45-net45+win8\BareMvvm.Core.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
+    <Reference Include="ToolsPortable, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\BareBonesDev.ToolsPortable.1.190820.8\lib\portable45-net45+win8\ToolsPortable.dll</HintPath>
+    </Reference>
     <Reference Include="Xamarin.iOS" />
   </ItemGroup>
   <ItemGroup>
@@ -87,17 +93,8 @@
     <Compile Include="Windows\NativeiOSAppWindow.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\PortableLibraries\BareMvvm\BareMvvm.Core\BareMvvm.Core.csproj">
-      <Project>{ab6ac1b2-91fb-4efb-b601-a795fbab4575}</Project>
-      <Name>BareMvvm.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\PortableLibraries\ToolsPortable\ToolsPortable\ToolsPortable.csproj">
-      <Project>{175abc4a-4f7b-4cdb-af1a-9cbf67a0601c}</Project>
-      <Name>ToolsPortable</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="app.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
 </Project>

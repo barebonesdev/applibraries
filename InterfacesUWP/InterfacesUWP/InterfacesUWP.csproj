@@ -302,20 +302,18 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)\PortableLibraries\BareMvvm\BareMvvm.Core\BareMvvm.Core.csproj">
-      <Project>{ab6ac1b2-91fb-4efb-b601-a795fbab4575}</Project>
-      <Name>BareMvvm.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\PortableLibraries\ToolsPortable\ToolsPortable\ToolsPortable.csproj">
-      <Project>{175abc4a-4f7b-4cdb-af1a-9cbf67a0601c}</Project>
-      <Name>ToolsPortable</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\ToolsUniversal\ToolsUniversal\ToolsUniversal.csproj">
       <Project>{b04e5040-2dbb-4d91-a5c8-fa21841d6372}</Project>
       <Name>ToolsUniversal</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="BareBonesDev.ToolsPortable">
+      <Version>1.190820.8</Version>
+    </PackageReference>
+    <PackageReference Include="BareMvvm.Core">
+      <Version>1.190820.1</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.1.9</Version>
     </PackageReference>
