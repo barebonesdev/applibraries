@@ -302,11 +302,11 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)\PortableLibraries\BareMvvm\BareMvvm.Core\BareMvvm.Core.csproj">
+    <ProjectReference Include="C:\Users\admin\Documents\GitHub\pp\powerplannerapps\\PortableLibraries\BareMvvm\BareMvvm.Core\BareMvvm.Core.csproj">
       <Project>{ab6ac1b2-91fb-4efb-b601-a795fbab4575}</Project>
       <Name>BareMvvm.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\PortableLibraries\ToolsPortable\ToolsPortable\ToolsPortable.csproj">
+    <ProjectReference Include="C:\Users\admin\Documents\GitHub\pp\powerplannerapps\\PortableLibraries\ToolsPortable\ToolsPortable\ToolsPortable.csproj">
       <Project>{175abc4a-4f7b-4cdb-af1a-9cbf67a0601c}</Project>
       <Name>ToolsPortable</Name>
     </ProjectReference>

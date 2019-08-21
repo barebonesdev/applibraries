@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>16c75e69-12d7-4cc8-86cd-98067991e95d</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>InterfacesDroid</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Activities\BareActivity.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Adapters\ObservableAdapter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Adapters\ObservableRecyclerViewAdapter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)App\AndroidDispatcher.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)App\NativeDroidApplication.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bindings\Adapters\BindableListAdapter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bindings\BindingApplicator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bindings\BindingExpression.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bindings\BindingMode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bindings\IValueConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bindings\Programmatic\Binding.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bindings\PropertyBinding.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bindings\Utilities\DelegateUtility.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bindings\Utilities\TypeUtility.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bindings\ValueConverters\ListAdapterConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bindings\ViewBinding\IViewBinder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bindings\ViewBinding\ViewBinderRegistry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bindings\ViewBinding\ViewEventBinder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bindings\ViewBinding\ViewValueChangedHandler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bindings\XmlBindingApplicator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Converters\BoolToVisibilityConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Converters\ColorArrayToColorConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Converters\ColorArrayToDrawableConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Converters\DateTimeToStringConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Converters\DayOfWeekToStringConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Converters\DoubleToStringConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Converters\EnumToVisibilityConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Converters\StringToVisibilityConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Converters\TimeSpanToStringConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DataTemplates\CustomDataTemplate.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DataTemplates\IDataTemplate.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DataTemplates\ResourceDataTemplate.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DataTemplates\ViewDataTemplate.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Decorations\DividerItemDecoration.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Dialogs\CustomColorPickerDialog.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\AndroidMessageDialog.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\AutofillHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\ColorTools.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\DateHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\KeyboardHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\TextViewHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Themes\ThemeHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ViewModelPresenters\GenericViewModelPresenter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ViewModelPresenters\PagedViewModelPresenter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ViewModelPresenters\PagedViewModelWithPopupsPresenter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ViewModelPresenters\ViewModelToViewConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\AdapterLinearLayout.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\CustomColorPickerView.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\GenericRecyclerViewHolder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\GridViewLayout.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\InflatedView.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\InflatedViewWithBinding.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\InlineDatePicker.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\ItemsControlWrapper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\MyCalendarMonthView.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\MyCalendarView.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\MyColorPicker.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\MyTextView.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\MyZoomAndPanView.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\ViewGroupExtensionMethods.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\ViewHost.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\ViewHostGeneric.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Windows\NativeDroidAppWindow.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)Resources\layout\CustomColorPickerChannelView.axml" />
+    <None Include="$(MSBuildThisFileDirectory)Resources\layout\CustomColorPickerView.axml" />
+  </ItemGroup>
+</Project>

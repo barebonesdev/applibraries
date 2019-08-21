@@ -12,6 +12,7 @@ using Android.Util;
 using Android.Views;
 using Android.Widget;
 using InterfacesDroid.Themes;
+using PowerPlannerAndroid;
 using ToolsPortable;
 
 namespace InterfacesDroid.Views
@@ -40,12 +41,12 @@ namespace InterfacesDroid.Views
             Initialize();
         }
 
-        public CustomColorPickerView(Context context, IAttributeSet attrs) : base(Resource.Layout.CustomColorPickerView, context, attrs)
+        public CustomColorPickerView(Context context, IAttributeSet attrs) : base(PowerPlannerAndroid.Resource.Layout.CustomColorPickerView, context, attrs)
         {
             Initialize();
         }
 
-        public CustomColorPickerView(Context context) : base(Resource.Layout.CustomColorPickerView, context)
+        public CustomColorPickerView(Context context) : base(PowerPlannerAndroid.Resource.Layout.CustomColorPickerView, context)
         {
             Initialize();
         }
@@ -74,9 +75,9 @@ namespace InterfacesDroid.Views
             m_channelG.PropertyChanged += Channel_PropertyChanged;
             m_channelB.PropertyChanged += Channel_PropertyChanged;
 
-            m_colorView = FindViewById(Resource.Id.ColorView);
+            m_colorView = FindViewById(PowerPlannerAndroid.Resource.Id.ColorView);
 
-            var channelContainer = FindViewById<LinearLayout>(Resource.Id.channel_container);
+            var channelContainer = FindViewById<LinearLayout>(PowerPlannerAndroid.Resource.Id.channel_container);
             CreateAndAddChannelView(channelContainer, m_channelR);
             CreateAndAddChannelView(channelContainer, m_channelG);
             CreateAndAddChannelView(channelContainer, m_channelB);
@@ -121,13 +122,13 @@ namespace InterfacesDroid.Views
         {
             private Channel m_channel;
 
-            public CustomColorPickerChannelView(ViewGroup root, Channel c) : base(root.Context, Resource.Layout.CustomColorPickerChannelView)
+            public CustomColorPickerChannelView(ViewGroup root, Channel c) : base(root.Context, PowerPlannerAndroid.Resource.Layout.CustomColorPickerChannelView)
             {
                 // Apparently the XML bindings don't work when it's running inside of Power Planner, so changing to programmatic
                 m_channel = c;
-                FindViewById<TextView>(Resource.Id.Label).Text = c.Name;
-                var valueText = FindViewById<TextView>(Resource.Id.ColorValue);
-                var seekBar = FindViewById<SeekBar>(Resource.Id.ColorSeekBar);
+                FindViewById<TextView>(PowerPlannerAndroid.Resource.Id.Label).Text = c.Name;
+                var valueText = FindViewById<TextView>(PowerPlannerAndroid.Resource.Id.ColorValue);
+                var seekBar = FindViewById<SeekBar>(PowerPlannerAndroid.Resource.Id.ColorSeekBar);
                 Bindings.Programmatic.Binding.SetBinding(c, nameof(c.Value), delegate
                 {
                     valueText.Text = c.Value.ToString();

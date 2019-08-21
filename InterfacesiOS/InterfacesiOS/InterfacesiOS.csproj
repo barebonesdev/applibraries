@@ -87,16 +87,6 @@
     <Compile Include="Windows\NativeiOSAppWindow.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\PortableLibraries\BareMvvm\BareMvvm.Core\BareMvvm.Core.csproj">
-      <Project>{ab6ac1b2-91fb-4efb-b601-a795fbab4575}</Project>
-      <Name>BareMvvm.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\PortableLibraries\ToolsPortable\ToolsPortable\ToolsPortable.csproj">
-      <Project>{175abc4a-4f7b-4cdb-af1a-9cbf67a0601c}</Project>
-      <Name>ToolsPortable</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />

@@ -129,12 +129,6 @@
     <EmbeddedResource Include="Properties\ToolsUniversal.rd.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)\PortableLibraries\ToolsPortable\ToolsPortable\ToolsPortable.csproj">
-      <Project>{175abc4a-4f7b-4cdb-af1a-9cbf67a0601c}</Project>
-      <Name>ToolsPortable</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.1.9</Version>
     </PackageReference>
