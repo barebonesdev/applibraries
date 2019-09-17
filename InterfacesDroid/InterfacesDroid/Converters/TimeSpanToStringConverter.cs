@@ -11,6 +11,7 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using BareMvvm.Core.Bindings;
+using InterfacesDroid.Helpers;
 
 namespace InterfacesDroid.Converters
 {
@@ -20,7 +21,7 @@ namespace InterfacesDroid.Converters
         {
             if (value is TimeSpan)
             {
-                return DateTime.Today.Add((TimeSpan)value).ToString("t");
+                return DateHelper.ToShortTimeString(DateTime.Today.Add((TimeSpan)value));
             }
 
             return value;
