@@ -15,6 +15,8 @@ using Android.Util;
 using InterfacesDroid.Helpers;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using InterfacesDroid.Bindings.Programmatic;
+using ToolsPortable;
 
 namespace InterfacesDroid.Views
 {
@@ -73,6 +75,11 @@ namespace InterfacesDroid.Views
             {
                 object oldValue = _dataContext?.Target;
 
+                if (_dataContextPropertyChangedHandler != null && oldValue is INotifyPropertyChanged oldValuePropertyChanged)
+                {
+                    oldValuePropertyChanged.PropertyChanged -= _dataContextPropertyChangedHandler;
+                }
+
                 _bindingApplicator.RemoveBindings();
 
                 if (value != null)
@@ -101,6 +108,24 @@ namespace InterfacesDroid.Views
                     }
                 }
 
+                if (value != null)
+                {
+                    // Start listening to properties if not already and it's wanted
+                    if (_listeningToDataContextProperties && _dataContextPropertyChangedHandler == null)
+                    {
+                        SubscribeToDataContextPropertyChanges();
+                    }
+
+                    // Apply all of the bindings when the data context changes
+                    foreach (var binding in _programmaticBindings)
+                    {
+                        foreach (var action in binding.Value)
+                        {
+                            ExecuteBinding(binding.Key, action);
+                        }
+                    }
+                }
+
                 OnDataContextChanged(oldValue, value);
             }
         }
@@ -108,6 +133,88 @@ namespace InterfacesDroid.Views
         protected virtual void OnDataContextChanged(object oldValue, object newValue)
         {
             // Nothing
+        }
+
+        public void SetBinding(string dataContextSourcePropertyName, object target, string targetPropertyName)
+        {
+            SetBinding(dataContextSourcePropertyName, delegate
+            {
+                var targetProp = target.GetType().GetProperty(targetPropertyName);
+                targetProp.SetValue(target, DataContext.GetType().GetProperty(dataContextSourcePropertyName).GetValue(DataContext));
+            });
+        }
+
+        private Dictionary<string, List<Action>> _programmaticBindings = new Dictionary<string, List<Action>>();
+
+        public void SetBinding(string dataContextSourcePropertyName, Action onValueChanged)
+        {
+            List<Action> actions;
+            if (!_programmaticBindings.TryGetValue(dataContextSourcePropertyName, out actions))
+            {
+                actions = new List<Action>();
+                _programmaticBindings[dataContextSourcePropertyName] = actions;
+            }
+
+            actions.Add(onValueChanged);
+
+            EnableListeningToDataContextProperties();
+
+            if (DataContext != null)
+            {
+                ExecuteBinding(dataContextSourcePropertyName, onValueChanged);
+            }
+        }
+
+        private PropertyChangedEventHandler _dataContextPropertyChangedHandler;
+        private bool _listeningToDataContextProperties = false;
+        private void EnableListeningToDataContextProperties()
+        {
+            if (_listeningToDataContextProperties)
+            {
+                return;
+            }
+
+            _listeningToDataContextProperties = true;
+
+            SubscribeToDataContextPropertyChanges();
+        }
+
+        private void SubscribeToDataContextPropertyChanges()
+        {
+            if (DataContext is INotifyPropertyChanged dataContext)
+            {
+                if (_dataContextPropertyChangedHandler == null)
+                {
+                    _dataContextPropertyChangedHandler = new WeakEventHandler<PropertyChangedEventArgs>(DataContext_PropertyChanged).Handler;
+                }
+
+                dataContext.PropertyChanged += _dataContextPropertyChangedHandler;
+            }
+        }
+
+        private void DataContext_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (_programmaticBindings.TryGetValue(e.PropertyName, out List<Action> actions))
+            {
+                foreach (var action in actions)
+                {
+                    ExecuteBinding(e.PropertyName, action);
+                }
+            }
+        }
+
+        private void ExecuteBinding(string sourceDataContextPropertyName, Action onValueChanged)
+        {
+            try
+            {
+                onValueChanged();
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                System.Diagnostics.Debugger.Break();
+#endif
+            }
         }
 
         ~InflatedViewWithBinding()
