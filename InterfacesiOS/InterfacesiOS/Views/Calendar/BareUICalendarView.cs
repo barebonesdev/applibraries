@@ -19,8 +19,10 @@ namespace InterfacesiOS.Views.Calendar
             System.Diagnostics.Debug.WriteLine("CalendarView disposed");
         }
 
-        public BareUICalendarView()
+        public BareUICalendarView(DayOfWeek firstDayOfWeek)
         {
+            _firstDayOfWeek = firstDayOfWeek;
+
             foreach (var monthView in GetViews())
             {
                 monthView.DateClicked += new WeakEventHandler<DateTime>(MonthView_DateClicked).Handler;
@@ -30,6 +32,20 @@ namespace InterfacesiOS.Views.Calendar
         private void MonthView_DateClicked(object sender, DateTime e)
         {
             DateClicked?.Invoke(this, e);
+        }
+
+        private DayOfWeek _firstDayOfWeek;
+        public DayOfWeek FirstDayOfWeek
+        {
+            get => _firstDayOfWeek;
+            set
+            {
+                if (_firstDayOfWeek != value)
+                {
+                    _firstDayOfWeek = value;
+                    UpdateAllViews();
+                }
+            }
         }
 
         private DateTime _displayMonth;
@@ -76,7 +92,7 @@ namespace InterfacesiOS.Views.Calendar
 
         protected override BareUICalendarMonthView CreateView()
         {
-            return new BareUICalendarMonthView();
+            return new BareUICalendarMonthView(FirstDayOfWeek);
         }
 
         protected override void OnMovedToNext()

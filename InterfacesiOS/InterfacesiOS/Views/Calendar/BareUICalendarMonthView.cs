@@ -45,6 +45,8 @@ namespace InterfacesiOS.Views.Calendar
         private UIView _viewDayHeaders;
         private UIView[] _viewRows;
 
+        public readonly DayOfWeek FirstDayOfWeek;
+
         ~BareUICalendarMonthView()
         {
             System.Diagnostics.Debug.WriteLine("Month view disposed");
@@ -53,8 +55,10 @@ namespace InterfacesiOS.Views.Calendar
         /// <summary>
         /// Assign the Month property to initialize the view
         /// </summary>
-        public BareUICalendarMonthView()
+        public BareUICalendarMonthView(DayOfWeek firstDayOfWeek)
         {
+            FirstDayOfWeek = firstDayOfWeek;
+
             var title = CreateTitle();
             this.Add(title);
             _viewTitle = title;
@@ -231,7 +235,7 @@ namespace InterfacesiOS.Views.Calendar
             if (_labelMonth != null)
                 _labelMonth.Text = Month.ToString("MMMM yyyy");
 
-            DateTime[,] array = CalendarArray.Generate(Month);
+            DateTime[,] array = CalendarArray.Generate(Month, FirstDayOfWeek);
 
             for (int row = 0; row < 6; row++)
             {
@@ -304,16 +308,16 @@ namespace InterfacesiOS.Views.Calendar
 
         protected virtual UIView CreateDayHeaders()
         {
-            return new DayHeadersView();
+            return new DayHeadersView(FirstDayOfWeek);
         }
 
         protected class DayHeadersView : UIView
         {
             private nfloat heightOfText;
 
-            public DayHeadersView()
+            public DayHeadersView(DayOfWeek firstDayOfWeek)
             {
-                DayOfWeek day = DayOfWeek.Sunday;
+                DayOfWeek day = firstDayOfWeek;
                 for (int i = 0; i < 7; i++, day++)
                 {
                     var label = new UILabel()
