@@ -438,7 +438,7 @@ namespace InterfacesUWP
                 addDay("Fri", inner, 5);
                 addDay("Sat", inner, 6);
 
-                DateTime[,] array = CalendarArray.Generate(month);
+                DateTime[,] array = CalendarArray.Generate(month, DayOfWeek.Sunday);
 
                 int index = 0;
                 for (int col = 0; col < 7; col++)

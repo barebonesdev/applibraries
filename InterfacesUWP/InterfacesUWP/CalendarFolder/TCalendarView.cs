@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,15 +16,16 @@ namespace InterfacesUWP.CalendarFolder
         {
             private DateTime? _selectedDate;
             private DateTime _displayMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            private DayOfWeek _firstDayOfWeek;
 
             private TCalendarView _picker;
-            public CalendarGenerator(TCalendarView picker) { _picker = picker; }
 
-            public CalendarGenerator(TCalendarView picker, DateTime displayMonth, DateTime? selectedDate)
+            public CalendarGenerator(TCalendarView picker, DateTime displayMonth, DateTime? selectedDate, DayOfWeek firstDayOfWeek)
             {
                 _picker = picker;
                 _selectedDate = selectedDate;
                 _displayMonth = new DateTime(displayMonth.Year, displayMonth.Month, 1);
+                _firstDayOfWeek = firstDayOfWeek;
             }
 
             public FrameworkElement GetCurrent()
@@ -58,6 +60,28 @@ namespace InterfacesUWP.CalendarFolder
 
         public event EventHandler<EventArgsCalendar> SelectionChanged;
         public event EventHandler<EventArgs> DisplayMonthChanged;
+
+
+
+        public DayOfWeek FirstDayOfWeek
+        {
+            get { return (DayOfWeek)GetValue(FirstDayOfWeekProperty); }
+            set { SetValue(FirstDayOfWeekProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for FirstDayOfWeek.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty FirstDayOfWeekProperty =
+            DependencyProperty.Register("FirstDayOfWeek", typeof(DayOfWeek), typeof(TCalendarView), new PropertyMetadata(CultureInfo.CurrentUICulture.DateTimeFormat.FirstDayOfWeek, OnFirstDayOfWeekChanged));
+
+        private static void OnFirstDayOfWeekChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        {
+            (sender as TCalendarView).OnFirstDayOfWeekChanged(e);
+        }
+
+        private void OnFirstDayOfWeekChanged(DependencyPropertyChangedEventArgs e)
+        {
+            base.ContentGenerator = new CalendarGenerator(this, DisplayMonth, SelectedDate, FirstDayOfWeek);
+        }
 
         protected List<TCalendarGrid> _calendars = new List<TCalendarGrid>();
 
@@ -269,7 +293,7 @@ namespace InterfacesUWP.CalendarFolder
 
         protected void Initialize()
         {
-            base.ContentGenerator = new CalendarGenerator(this, DisplayMonth, SelectedDate);
+            base.ContentGenerator = new CalendarGenerator(this, DisplayMonth, SelectedDate, FirstDayOfWeek);
         }
 
         /// <summary>
@@ -354,7 +378,7 @@ namespace InterfacesUWP.CalendarFolder
 
                         if (!selectedIsVisible)
                         {
-                            base.ContentGenerator = new CalendarGenerator(this, DateTools.GetMonth(value.Value), value);
+                            base.ContentGenerator = new CalendarGenerator(this, DateTools.GetMonth(value.Value), value, FirstDayOfWeek);
                         }
                     }
                 }
@@ -385,7 +409,7 @@ namespace InterfacesUWP.CalendarFolder
         {
             if (!DateTools.SameMonth(GetCurrentDisplayMonth(), DisplayMonth))
             {
-                base.ContentGenerator = new CalendarGenerator(this, DisplayMonth, SelectedDate);
+                base.ContentGenerator = new CalendarGenerator(this, DisplayMonth, SelectedDate, FirstDayOfWeek);
             }
         }
 

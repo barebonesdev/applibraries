@@ -12,8 +12,6 @@ namespace InterfacesUWP
         protected override TCalendarGrid GenerateCalendarGrid(DateTime displayMonth)
         {
             return new DefaultCalendarGrid(this, displayMonth, IsMouseOver);
-
-            
         }
 
         protected override void OnMouseOverChanged(Windows.UI.Xaml.Input.PointerRoutedEventArgs e)

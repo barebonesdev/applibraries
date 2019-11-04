@@ -30,9 +30,12 @@ namespace InterfacesUWP.CalendarFolder
 
         public TCalendarView CalendarView { get; private set; }
 
+        public readonly DayOfWeek FirstDayOfWeek;
+
         public TCalendarGrid(TCalendarView calendarView, DateTime displayMonth)
         {
             CalendarView = calendarView;
+            FirstDayOfWeek = calendarView.FirstDayOfWeek;
 
             displayMonth = new DateTime(displayMonth.Year, displayMonth.Month, 1);
             DisplayMonth = displayMonth;
@@ -72,17 +75,15 @@ namespace InterfacesUWP.CalendarFolder
 
 
             //add the day headers
-            addDay(DayOfWeek.Sunday, inner, 0);
-            addDay(DayOfWeek.Monday, inner, 1);
-            addDay(DayOfWeek.Tuesday, inner, 2);
-            addDay(DayOfWeek.Wednesday, inner, 3);
-            addDay(DayOfWeek.Thursday, inner, 4);
-            addDay(DayOfWeek.Friday, inner, 5);
-            addDay(DayOfWeek.Saturday, inner, 6);
+            DayOfWeek dayHeader = FirstDayOfWeek;
+            for (int i = 0; i < 7; i++, dayHeader++)
+            {
+                addDay(dayHeader, inner, i);
+            }
 
 
             //add the days
-            DateTime[,] array = CalendarArray.Generate(DisplayMonth);
+            DateTime[,] array = CalendarArray.Generate(DisplayMonth, FirstDayOfWeek);
 
             for (int col = 0; col < 7; col++)
                 for (int row = 0; row < 6; row++)
