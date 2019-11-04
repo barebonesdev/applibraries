@@ -27,9 +27,11 @@ namespace InterfacesDroid.Views
         private TextView _title;
         private LinearLayout _linearLayoutDayHeaders;
         public MyCalendarView CalendarView { get; private set; }
+        public readonly DayOfWeek FirstDayOfWeek;
 
-        public MyCalendarMonthView(ViewGroup parent, MyCalendarView calendarView) : base(parent.Context)
+        public MyCalendarMonthView(ViewGroup parent, MyCalendarView calendarView, DayOfWeek firstDayOfWeek) : base(parent.Context)
         {
+            FirstDayOfWeek = firstDayOfWeek;
             CalendarView = calendarView;
             Initialize();
         }
@@ -148,7 +150,7 @@ namespace InterfacesDroid.Views
 
         private void UpdateTableLayoutDays()
         {
-            DateTime[,] array = CalendarArray.Generate(Month);
+            DateTime[,] array = CalendarArray.Generate(Month, FirstDayOfWeek);
 
             for (int row = 0; row < 6; row++)
             {
@@ -219,7 +221,7 @@ namespace InterfacesDroid.Views
                     LinearLayout.LayoutParams.WrapContent)
             };
 
-            DateTime date = DateTools.Last(DayOfWeek.Sunday);
+            DateTime date = DateTools.Last(FirstDayOfWeek);
 
             for (int i = 0; i < 7; i++, date = date.AddDays(1))
             {

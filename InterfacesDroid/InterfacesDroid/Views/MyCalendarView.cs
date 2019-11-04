@@ -111,9 +111,11 @@ namespace InterfacesDroid.Views
         {
             public DateTime CenterMonth { get; private set; }
             public DateTime FirstMonth { get; private set; }
+            public readonly DayOfWeek FirstDayOfWeek;
 
-            public CalendarAdapter(DateTime month)
+            public CalendarAdapter(DateTime month, DayOfWeek firstDayOfWeek)
             {
+                FirstDayOfWeek = firstDayOfWeek;
                 month = DateTools.GetMonth(month);
 
                 CenterMonth = month;
