@@ -87,6 +87,7 @@
     <Compile Include="Bindings\XmlBindingApplicator.cs" />
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Converters\ColorArrayToColorConverter.cs" />
+    <Compile Include="Converters\ColorArrayToColorStateListConverter.cs" />
     <Compile Include="Converters\ColorArrayToDrawableConverter.cs" />
     <Compile Include="Converters\DateTimeToStringConverter.cs" />
     <Compile Include="Converters\DayOfWeekToStringConverter.cs" />

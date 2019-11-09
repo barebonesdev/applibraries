@@ -10,6 +10,7 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using Android.Graphics;
+using Android.Content.Res;
 
 namespace InterfacesDroid.Helpers
 {
@@ -31,6 +32,16 @@ namespace InterfacesDroid.Helpers
         public static byte[] ToArray(Color color)
         {
             return new byte[] { color.R, color.G, color.B };
+        }
+
+        public static ColorStateList GetColorStateList(Color color)
+        {
+            return new ColorStateList(new int[][]
+                { new int[0] },
+                new int[]
+                {
+                    color
+                });
         }
     }
 }

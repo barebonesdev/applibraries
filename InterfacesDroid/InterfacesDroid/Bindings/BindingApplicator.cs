@@ -34,6 +34,9 @@
 */
 #endregion
 
+using Android.Content.Res;
+using Android.Support.V4.View;
+using Android.Views;
 using Android.Widget;
 using InterfacesDroid.Helpers;
 using System;
@@ -566,6 +569,11 @@ namespace BareMvvm.Core.Bindings
                 {
                     var wrapper = new TextViewStrikethroughWrapper(view as TextView);
                     targetProperty.SetValue(wrapper, sourcePropertyValue);
+                }
+                else if (view is View androidView && targetProperty.Name == nameof(androidView.BackgroundTintList) && sourcePropertyValue is ColorStateList colorStateList)
+                {
+                    // Use ViewCompat since this property didn't exist till API 21
+                    ViewCompat.SetBackgroundTintList(androidView, colorStateList);
                 }
                 else
                 {
