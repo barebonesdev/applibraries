@@ -134,7 +134,9 @@ namespace BareMvvm.Core.Bindings
                         _valueConverterTypes[type.Name] = type;
                     }
 
+#if DEBUG
                     _processedAssemblies.Add(assembly);
+#endif
                 }
 
                 _assembliesThatNeedProcessing.Clear();
