@@ -53,6 +53,7 @@ using Exception = System.Exception;
 using Android.Support.Design.Widget;
 using Android.Widget;
 using ToolsPortable;
+using System.Reflection;
 
 namespace BareMvvm.Core.Bindings
 {
@@ -66,6 +67,45 @@ namespace BareMvvm.Core.Bindings
     /// </summary>
 	public class XmlBindingApplicator
     {
+        private static readonly List<Assembly> _assembliesThatNeedProcessing = new List<Assembly>()
+        {
+            // Include this assembly as it has several converters
+            Assembly.GetExecutingAssembly()
+        };
+
+#if DEBUG
+        private static readonly List<Assembly> _processedAssemblies = new List<Assembly>();
+#endif
+
+        /// <summary>
+        /// Registers the assembly calling this method as an assembly that'll be searched for type converters
+        /// </summary>
+        public static void RegisterThisAssembly()
+        {
+            RegisterAssembly(Assembly.GetCallingAssembly());
+        }
+
+        /// <summary>
+        /// Registers the specified assembly as a type converter source
+        /// </summary>
+        /// <param name="assembly"></param>
+        public static void RegisterAssembly(Assembly assembly)
+        {
+#if DEBUG
+            // We only do this check in debug, since assuming in release we already would have seen the issue in debug
+            if (_processedAssemblies.Contains(assembly))
+            {
+                Debugger.Break();
+                throw new InvalidOperationException("Assembly cannot be registered twice");
+            }
+#endif
+
+            if (!_assembliesThatNeedProcessing.Contains(assembly))
+            {
+                _assembliesThatNeedProcessing.Add(assembly);
+            }
+        }
+
         static readonly XName bindingXmlNamespace
             = XNamespace.Get("http://schemas.android.com/apk/res-auto") + "Binding";
         static readonly XName idXmlAttribute
@@ -73,7 +113,47 @@ namespace BareMvvm.Core.Bindings
 
         static readonly ViewBinderRegistry registry = new ViewBinderRegistry();
 
-        static List<Type> valueConverterTypes;
+        private static Dictionary<string, Type> _valueConverterTypes = new Dictionary<string, Type>();
+
+        private static Dictionary<string, Type> GetValueConverterTypes()
+        {
+            if (_assembliesThatNeedProcessing.Count > 0)
+            {
+                foreach (var assembly in _assembliesThatNeedProcessing)
+                {
+                    foreach (var type in TypeUtility.GetTypes<IValueConverter>(assembly))
+                    {
+#if DEBUG
+                        if (_valueConverterTypes.ContainsKey(type.Name))
+                        {
+                            // Alert about overwriting type
+                            Debugger.Break();
+                        }
+#endif
+
+                        _valueConverterTypes[type.Name] = type;
+                    }
+
+                    _processedAssemblies.Add(assembly);
+                }
+
+                _assembliesThatNeedProcessing.Clear();
+            }
+
+            return _valueConverterTypes;
+        }
+
+        private static Type GetValueConverter(string valueConverterName)
+        {
+            if (GetValueConverterTypes().TryGetValue(valueConverterName, out Type valueConverterType))
+            {
+                return valueConverterType;
+            }
+            else
+            {
+                return null;
+            }
+        }
 
         readonly List<Action> unbindActions = new List<Action>();
 
@@ -141,24 +221,6 @@ namespace BareMvvm.Core.Bindings
                     return;
                 }
 
-                /* Load all the converters if there is a binding using a converter. */
-                if (bindingInfos.Any(info => !string.IsNullOrWhiteSpace(info.Converter)))
-                {
-                    if (valueConverterTypes == null)
-                    {
-                        valueConverterTypes = new List<Type>();
-                        var converters = TypeUtility.GetTypes<IValueConverter>().ToList();
-                        if (converters.Any())
-                        {
-                            valueConverterTypes.AddRange(converters);
-                        }
-                        else if (Debugger.IsAttached)
-                        {
-                            Debugger.Break();
-                        }
-                    }
-                }
-
                 BindingApplicator binder = new BindingApplicator();
 
                 foreach (var bindingInfo in bindingInfos)
@@ -168,7 +230,7 @@ namespace BareMvvm.Core.Bindings
 
                     if (!string.IsNullOrWhiteSpace(valueConverterName))
                     {
-                        var valueConverterType = valueConverterTypes.FirstOrDefault(t => t.Name == valueConverterName);
+                        var valueConverterType = GetValueConverter(valueConverterName);
                         if (valueConverterType != null)
                         {
                             var valueConverterConstructor = valueConverterType.GetConstructor(Type.EmptyTypes);
@@ -223,17 +285,6 @@ namespace BareMvvm.Core.Bindings
                     return;
                 }
 
-                /* Load all the converters if there is a binding using a converter. */
-                if (bindingInfos.Any(bo => !string.IsNullOrWhiteSpace(bo.Converter)))
-                {
-                    if (valueConverterTypes == null)
-                    {
-                        valueConverterTypes = new List<Type>();
-                        var converters = TypeUtility.GetTypes<IValueConverter>();
-                        valueConverterTypes.AddRange(converters);
-                    }
-                }
-
                 BindingApplicator binder = new BindingApplicator();
 
                 foreach (var bindingInfo in bindingInfos)
@@ -243,7 +294,7 @@ namespace BareMvvm.Core.Bindings
 
                     if (!string.IsNullOrWhiteSpace(valueConverterName))
                     {
-                        var converterType = valueConverterTypes.FirstOrDefault(t => t.Name == valueConverterName);
+                        var converterType = GetValueConverter(valueConverterName);
                         if (converterType != null)
                         {
                             var constructor = converterType.GetConstructor(Type.EmptyTypes);

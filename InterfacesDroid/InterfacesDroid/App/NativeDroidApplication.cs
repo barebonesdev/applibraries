@@ -41,6 +41,9 @@ namespace InterfacesDroid.App
 
         protected NativeDroidApplication(IntPtr javaReference, JniHandleOwnership transfer) : base(javaReference, transfer)
         {
+            // Register the calling assembly (the app) as a ValueConverter source
+            BareMvvm.Core.Bindings.XmlBindingApplicator.RegisterAssembly(System.Reflection.Assembly.GetCallingAssembly());
+
             // Workaround for bug with DateTime.ToString failing in Thai culture
             // Force Thai culture to English
             // https://bugzilla.xamarin.com/show_bug.cgi?id=31228

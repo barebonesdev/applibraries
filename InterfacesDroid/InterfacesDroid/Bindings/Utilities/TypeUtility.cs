@@ -59,119 +59,28 @@ namespace BareMvvm.Core.Bindings
 
             foreach (var assembly in assemblies)
             {
-                var assemblyTypes = assembly.GetTypes();
-
-                var types = assemblyTypes.Where(t => typeof(TDerivingFrom).IsAssignableFrom(t)).ToList();
-                foreach (var type in types)
+                foreach (var type in GetTypes<TDerivingFrom>(assembly))
                 {
-                    if (!type.IsInterface && !type.IsAbstract)
-                    {
-                        result.Add(type);
-                    }
+                    result.Add(type);
                 }
             }
 
             return result;
-
-   //         IEnumerable<AssemblyName> assemblies = GetNonSystemAssemblies();
-
-			//List<Type> result = null;
-
-			//foreach (var customAssembly in assemblies)
-			//{
-			//	var assembly = Assembly.Load(customAssembly);
-			//	var assemblyTypes = assembly.GetTypes();
-
-			//	var types = assemblyTypes.Where(t => typeof(TDerivingFrom).IsAssignableFrom(t)).ToList();
-			//	foreach (var type in types)
-			//	{
-			//		if (!type.IsInterface && !type.IsAbstract)
-			//		{
-			//			if (result == null)
-			//			{
-			//				result = new List<Type>();
-			//			}
-
-			//			result.Add(type);
-			//		}
-			//	}
-			//}
-
-			//return result;
 		}
 
-		/// <summary>
-		/// Gets the set of non system assemblies.
-		/// Based on code by Thomas Lebrun http://bit.ly/1OQsD8L
-		/// </summary>
-		/// <returns>The list of known assemblies that are not system assemblies 
-		/// as determined by <seealso cref="IsSystemAssembly"/>.</returns>
-		static IEnumerable<AssemblyName> GetNonSystemAssemblies()
-		{
-			StackFrame[] stackFrames = new StackTrace().GetFrames();
+        internal static IEnumerable<Type> GetTypes<TDerivingFrom>(Assembly assembly)
+        {
+            var assemblyTypes = assembly.GetTypes();
 
-			var result = new List<AssemblyName>();
-
-			if (stackFrames == null)
-			{
-				return result;
-			}
-
-			Assembly executingAssembly = Assembly.GetExecutingAssembly();
-			string executingAssemblyName = executingAssembly.GetName().Name;
-			var examinedAssemblies = new List<AssemblyName>();
-
-			foreach (var frame in stackFrames)
-			{
-				var declaringType = frame.GetMethod().DeclaringType;
-				if (declaringType == null)
-				{
-					continue;
-				}
-
-				var assembly = declaringType.Assembly;
-				var assemblyName = assembly.GetName();
-
-				if (examinedAssemblies.Contains(assemblyName))
-				{
-					continue;
-				}
-
-				var currentAssemblyName = assemblyName;
-
-				if (!IsSystemAssembly(currentAssemblyName.Name) 
-					&& !result.Contains(currentAssemblyName))
-				{
-					result.Add(currentAssemblyName);
-				}
-
-				examinedAssemblies.Add(currentAssemblyName);
-
-				AssemblyName[] referencedAssemblyNames = assembly.GetReferencedAssemblies();
-
-				if (referencedAssemblyNames != null)
-				{
-					foreach (var referencedAssemblyName in referencedAssemblyNames)
-					{
-						if (referencedAssemblyName.Name == executingAssemblyName 
-							|| examinedAssemblies.Contains(referencedAssemblyName))
-						{
-							continue;
-						}
-
-						if (!IsSystemAssembly(referencedAssemblyName.Name) 
-							&& !result.Contains(referencedAssemblyName))
-						{
-							result.Add(referencedAssemblyName);
-						}
-
-						examinedAssemblies.Add(referencedAssemblyName);
-					}
-				}
-			}
-
-			return result;
-		}
+            var types = assemblyTypes.Where(t => typeof(TDerivingFrom).IsAssignableFrom(t)).ToList();
+            foreach (var type in types)
+            {
+                if (!type.IsInterface && !type.IsAbstract)
+                {
+                    yield return type;
+                }
+            }
+        }
 
 		static bool IsSystemAssembly(string assemblyName)
 		{
