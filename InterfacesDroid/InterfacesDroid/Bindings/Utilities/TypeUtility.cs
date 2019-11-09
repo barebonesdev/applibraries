@@ -53,31 +53,51 @@ namespace BareMvvm.Core.Bindings
 		/// <returns>A list of types deriving from the specified type.</returns>
 		internal static IEnumerable<Type> GetTypes<TDerivingFrom>()
 		{
-			IEnumerable<AssemblyName> assemblies = GetNonSystemAssemblies();
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(i => !IsSystemAssembly(i.GetName().Name));
 
-			List<Type> result = null;
+            List<Type> result = new List<Type>();
 
-			foreach (var customAssembly in assemblies)
-			{
-				var assembly = Assembly.Load(customAssembly);
-				var assemblyTypes = assembly.GetTypes();
+            foreach (var assembly in assemblies)
+            {
+                var assemblyTypes = assembly.GetTypes();
 
-				var types = assemblyTypes.Where(t => typeof(TDerivingFrom).IsAssignableFrom(t)).ToList();
-				foreach (var type in types)
-				{
-					if (!type.IsInterface && !type.IsAbstract)
-					{
-						if (result == null)
-						{
-							result = new List<Type>();
-						}
+                var types = assemblyTypes.Where(t => typeof(TDerivingFrom).IsAssignableFrom(t)).ToList();
+                foreach (var type in types)
+                {
+                    if (!type.IsInterface && !type.IsAbstract)
+                    {
+                        result.Add(type);
+                    }
+                }
+            }
 
-						result.Add(type);
-					}
-				}
-			}
+            return result;
 
-			return result;
+   //         IEnumerable<AssemblyName> assemblies = GetNonSystemAssemblies();
+
+			//List<Type> result = null;
+
+			//foreach (var customAssembly in assemblies)
+			//{
+			//	var assembly = Assembly.Load(customAssembly);
+			//	var assemblyTypes = assembly.GetTypes();
+
+			//	var types = assemblyTypes.Where(t => typeof(TDerivingFrom).IsAssignableFrom(t)).ToList();
+			//	foreach (var type in types)
+			//	{
+			//		if (!type.IsInterface && !type.IsAbstract)
+			//		{
+			//			if (result == null)
+			//			{
+			//				result = new List<Type>();
+			//			}
+
+			//			result.Add(type);
+			//		}
+			//	}
+			//}
+
+			//return result;
 		}
 
 		/// <summary>
@@ -155,15 +175,13 @@ namespace BareMvvm.Core.Bindings
 
 		static bool IsSystemAssembly(string assemblyName)
 		{
-			var result = string.Equals(assemblyName, "Mono.Android", StringComparison.InvariantCultureIgnoreCase);
-			result |= string.Equals(assemblyName, "mscorlib", StringComparison.InvariantCultureIgnoreCase);
-			result |= string.Equals(assemblyName, "System", StringComparison.InvariantCultureIgnoreCase);
-			result |= string.Equals(assemblyName, "System.Core", StringComparison.InvariantCultureIgnoreCase);
-			result |= string.Equals(assemblyName, "System.Xml", StringComparison.InvariantCultureIgnoreCase);
-			result |= string.Equals(assemblyName, "System.Xml.Linq", StringComparison.InvariantCultureIgnoreCase);
-			result |= assemblyName.StartsWith("Xamarin.Android.Support", StringComparison.OrdinalIgnoreCase);
-
-			return result;
+			return string.Equals(assemblyName, "Mono.Android", StringComparison.InvariantCultureIgnoreCase)
+			|| string.Equals(assemblyName, "mscorlib", StringComparison.InvariantCultureIgnoreCase)
+			|| string.Equals(assemblyName, "System", StringComparison.InvariantCultureIgnoreCase)
+			|| string.Equals(assemblyName, "System.Core", StringComparison.InvariantCultureIgnoreCase)
+			|| string.Equals(assemblyName, "System.Xml", StringComparison.InvariantCultureIgnoreCase)
+			|| string.Equals(assemblyName, "System.Xml.Linq", StringComparison.InvariantCultureIgnoreCase)
+			|| assemblyName.StartsWith("Xamarin.Android.Support", StringComparison.OrdinalIgnoreCase);
 		}
 	}
 }
