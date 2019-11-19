@@ -278,7 +278,7 @@ namespace InterfacesiOS.Views.Calendar
 
         protected virtual void OnSelectedDateChanged()
         {
-            DateTime[,] array = CalendarArray.Generate(Month);
+            DateTime[,] array = CalendarArray.Generate(Month, FirstDayOfWeek);
 
             for (int row = 0; row < 6; row++)
             {
