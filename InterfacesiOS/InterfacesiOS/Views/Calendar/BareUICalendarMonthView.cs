@@ -45,7 +45,7 @@ namespace InterfacesiOS.Views.Calendar
         private UIView _viewDayHeaders;
         private UIView[] _viewRows;
 
-        public readonly DayOfWeek FirstDayOfWeek;
+        public DayOfWeek FirstDayOfWeek { get; private set; }
 
         ~BareUICalendarMonthView()
         {
