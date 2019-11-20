@@ -8,6 +8,8 @@ using UIKit;
 using BareMvvm.Core.ViewModels;
 using System.Collections.Specialized;
 using ToolsPortable;
+using System.Threading.Tasks;
+using ObjCRuntime;
 
 namespace InterfacesiOS.ViewModelPresenters
 {
@@ -17,6 +19,11 @@ namespace InterfacesiOS.ViewModelPresenters
         {
             NavigationBarHidden = true;
         }
+
+        /// <summary>
+        /// Event for when the view controller is removed (fires both for programmatic removals and removals via gesture)
+        /// </summary>
+        public event EventHandler OnRemoved;
 
         private List<Tuple<BaseViewModel, UIViewController>> _liveViews = new List<Tuple<BaseViewModel, UIViewController>>();
         private NotifyCollectionChangedEventHandler _viewModelsCollectionChangedHandler;
@@ -153,9 +160,10 @@ namespace InterfacesiOS.ViewModelPresenters
 
         private void Remove(int index, int count)
         {
-            for (int i = 0; i < count; i++)
+            // Make sure to delete from the back first, so view disposals happen in correct order
+            for (int i = index + count - 1; i >= index; i--)
             {
-                var vc = _liveViews[index].Item2;
+                var vc = _liveViews[i].Item2;
                 vc.WillMoveToParentViewController(null);
                 vc.RemoveFromParentViewController();
                 if (_liveViews.Count == 1)
@@ -164,8 +172,16 @@ namespace InterfacesiOS.ViewModelPresenters
                     // won't remove the last view
                     vc.ViewDidDisappear(false);
                 }
-                _liveViews.RemoveAt(index);
+                _liveViews.RemoveAt(i);
             }
+        }
+
+        public override void ViewDidDisappear(bool animated)
+        {
+            // Note that ViewWillDisappear fires even if the user hasn't actually dragged the popup view off screen, so
+            // it's premature and can only trust DidDisappear.
+            // Note that the animated boolean is true even if I programmatically close
+            OnRemoved?.Invoke(this, new EventArgs());
         }
     }
 }

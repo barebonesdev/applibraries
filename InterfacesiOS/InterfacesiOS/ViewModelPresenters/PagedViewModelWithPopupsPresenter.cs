@@ -7,6 +7,7 @@ using Foundation;
 using UIKit;
 using System.Collections.Specialized;
 using ToolsPortable;
+using System.Threading.Tasks;
 
 namespace InterfacesiOS.ViewModelPresenters
 {
@@ -24,6 +25,19 @@ namespace InterfacesiOS.ViewModelPresenters
         public PagedViewModelWithPopupsPresenter()
         {
             _listPresenter = new ListOfViewModelsPresenter();
+            _listPresenter.OnRemoved += _listPresenter_OnRemoved;
+        }
+
+        private void _listPresenter_OnRemoved(object sender, EventArgs e)
+        {
+            // This handles cases where user removed via gesture, so we have to update the model
+            // Note that this is also fired when user removes by clicking
+            _isShown = false;
+
+            if (ViewModel.Popups.Count > 0)
+            {
+                ViewModel.Popups.Clear();
+            }
         }
 
         private NotifyCollectionChangedEventHandler _popupsCollectionChangedHandler;
@@ -42,11 +56,18 @@ namespace InterfacesiOS.ViewModelPresenters
             if (newModel != null)
             {
                 newModel.Popups.CollectionChanged += _popupsCollectionChangedHandler;
+                newModel.CurrentPopupAllowsLightDismissChanged += CurrentPopupAllowsLightDismissChanged;
             }
 
             UpdateVisibility();
+            UpdateLightDismiss();
 
             base.OnViewModelChanged(oldViewModel, currentViewModel);
+        }
+
+        private void CurrentPopupAllowsLightDismissChanged(object sender, bool newValue)
+        {
+            UpdateLightDismiss();
         }
 
         private void Deregister(BaseViewModel oldViewModel)
@@ -56,6 +77,7 @@ namespace InterfacesiOS.ViewModelPresenters
             if (old != null)
             {
                 old.Popups.CollectionChanged -= _popupsCollectionChangedHandler;
+                old.CurrentPopupAllowsLightDismissChanged -= CurrentPopupAllowsLightDismissChanged;
             }
         }
 
@@ -77,6 +99,20 @@ namespace InterfacesiOS.ViewModelPresenters
                     ShowDetailViewController(_listPresenter, null);
                     _isShown = true;
                 }
+            }
+        }
+
+        private static bool SupportsModalInPresentation = UIDevice.CurrentDevice.CheckSystemVersion(13, 0);
+
+        private void UpdateLightDismiss()
+        {
+            if (ViewModel == null || _destroyed)
+            {
+                return;
+            }
+            else if (SupportsModalInPresentation)
+            {
+                _listPresenter.ModalInPresentation = !ViewModel.CurrentPopupAllowsLightDismiss;
             }
         }
 
