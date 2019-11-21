@@ -16,7 +16,27 @@ namespace InterfacesiOS.Views
         private TUIView _currView;
         private TUIView _nextView;
 
+        /// <summary>
+        /// Overload to postpone initialization. You MUST call <see cref="Initialize"/>. Useful if you need to set some properties before <see cref="CreateView"/> is called.
+        /// </summary>
+        /// <param name="initialization"></param>
+        public BareUISlideView(bool postponeInitialization)
+        {
+            if (!postponeInitialization)
+            {
+                Initialize();
+            }
+        }
+
         public BareUISlideView()
+        {
+            Initialize();
+        }
+
+        /// <summary>
+        /// Only call this if you used the overload constructor to postpone initialization
+        /// </summary>
+        protected void Initialize()
         {
             this.PagingEnabled = true;
             this.Bounces = false;

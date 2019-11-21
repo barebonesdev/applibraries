@@ -19,9 +19,11 @@ namespace InterfacesiOS.Views.Calendar
             System.Diagnostics.Debug.WriteLine("CalendarView disposed");
         }
 
-        public BareUICalendarView(DayOfWeek firstDayOfWeek)
+        public BareUICalendarView(DayOfWeek firstDayOfWeek) : base(postponeInitialization: true)
         {
             _firstDayOfWeek = firstDayOfWeek;
+
+            Initialize();
 
             foreach (var monthView in GetViews())
             {
