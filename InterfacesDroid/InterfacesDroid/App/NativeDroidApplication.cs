@@ -49,8 +49,9 @@ namespace InterfacesDroid.App
             // https://bugzilla.xamarin.com/show_bug.cgi?id=31228
             if (Java.Util.Locale.Default.ToString() == "th_TH")
             {
-                CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CreateSpecificCulture("en-US");
-                CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CreateSpecificCulture("en-US");
+                // https://xamarin.github.io/bugzilla-archives/59/59077/bug.html
+                // https://github.com/xamarin/Xamarin.Forms/issues/4037
+                new ThaiBuddhistCalendar();
             }
         }
 
