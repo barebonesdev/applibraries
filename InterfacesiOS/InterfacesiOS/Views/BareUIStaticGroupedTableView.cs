@@ -160,7 +160,19 @@ namespace InterfacesiOS.Views
 
             public override void RowSelected(UITableView tableView, NSIndexPath indexPath)
             {
-                _groups[indexPath.Section][indexPath.Row].Action?.Invoke();
+                if (indexPath.Section >= _groups.Count)
+                {
+                    return;
+                }
+
+                var group = _groups[indexPath.Section];
+
+                if (indexPath.Row >= group.Count)
+                {
+                    return;
+                }
+
+                group[indexPath.Row].Action?.Invoke();
 
                 // Immediately unselect it
                 _tableView.SelectRow(null, true, UITableViewScrollPosition.None);
