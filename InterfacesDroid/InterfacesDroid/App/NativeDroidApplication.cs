@@ -50,6 +50,7 @@ namespace InterfacesDroid.App
             if (Java.Util.Locale.Default.ToString() == "th_TH")
             {
                 CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CreateSpecificCulture("en-US");
+                CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CreateSpecificCulture("en-US");
             }
         }
 
