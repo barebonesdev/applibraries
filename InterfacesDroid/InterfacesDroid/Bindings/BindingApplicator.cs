@@ -220,7 +220,7 @@ namespace BareMvvm.Core.Bindings
 
                                 PropertyBinding binding = propertyBinding[0];
 
-                                if (binding != null)
+                                if (binding != null && binding.View != null)
                                 {
                                     if (binding.PreventUpdateForTargetProperty)
                                     {
@@ -524,6 +524,11 @@ namespace BareMvvm.Core.Bindings
             {
                 if (targetProperty == null)
                     throw new ArgumentNullException(nameof(targetProperty));
+
+                if (view == null)
+                {
+                    throw new ArgumentNullException(nameof(view));
+                }
 
                 // Use the converter
                 var sourcePropertyValue = converter == null
