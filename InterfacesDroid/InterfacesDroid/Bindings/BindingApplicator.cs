@@ -578,7 +578,15 @@ namespace BareMvvm.Core.Bindings
                 else if (view is View androidView && targetProperty.Name == nameof(androidView.BackgroundTintList) && sourcePropertyValue is ColorStateList colorStateList)
                 {
                     // Use ViewCompat since this property didn't exist till API 21
-                    ViewCompat.SetBackgroundTintList(androidView, colorStateList);
+                    try
+                    {
+                        ViewCompat.SetBackgroundTintList(androidView, colorStateList);
+                    }
+                    catch (Java.Lang.RuntimeException)
+                    {
+                        // This theoretically shouldn't ever fail, yet it seems to fail sometimes due to a null reference exception
+                        // which makes no sense. So I'll just catch it.
+                    }
                 }
                 else
                 {
