@@ -316,7 +316,7 @@ namespace InterfacesiOS.Binding
             });
         }
 
-        public void SetVisibilityBinding(BareUIVisibilityContainer visibilityContainer, string propertyName)
+        public void SetVisibilityBinding(BareUIVisibilityContainer visibilityContainer, string propertyName, bool invert = false)
         {
             SetBinding(propertyName, delegate
             {
@@ -326,9 +326,18 @@ namespace InterfacesiOS.Binding
                 {
                     boolean = b;
                 }
+                else if (value is string s)
+                {
+                    boolean = !string.IsNullOrWhiteSpace(s);
+                }
                 else
                 {
                     boolean = value != null;
+                }
+
+                if (invert)
+                {
+                    boolean = !boolean;
                 }
 
                 visibilityContainer.IsVisible = boolean;
@@ -378,9 +387,17 @@ namespace InterfacesiOS.Binding
                 {
                     valueText = converter.Invoke(value);
                 }
+                else if (value is string valueStr)
+                {
+                    valueText = valueStr;
+                }
                 else if (value is DayOfWeek)
                 {
                     valueText = DateTools.ToLocalizedString((DayOfWeek)value);
+                }
+                else if (value == null)
+                {
+                    valueText = "";
                 }
                 else
                 {
@@ -487,11 +504,16 @@ namespace InterfacesiOS.Binding
             }
         }
 
-        public void SetVisibilityBinding(UIView view, string propertyName)
+        public void SetVisibilityBinding(UIView view, string propertyName, bool invert = false)
         {
             SetBinding(propertyName, delegate
             {
                 bool isVisible = (bool)BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject);
+
+                if (invert)
+                {
+                    isVisible = !isVisible;
+                }
 
                 view.Hidden = !isVisible;
             });

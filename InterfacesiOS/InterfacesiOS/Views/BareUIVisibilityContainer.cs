@@ -45,11 +45,7 @@ namespace InterfacesiOS.Views
             get { return _child; }
             set
             {
-                if (_child != null)
-                {
-                    _child.RemoveFromSuperview();
-                    this.RemoveConstraints(this.Constraints);
-                }
+                Remove();
 
                 _child = value;
 
@@ -64,12 +60,10 @@ namespace InterfacesiOS.Views
         {
             if (Child != null)
             {
+                this.RemoveConstraints(this.Constraints);
                 Add(Child);
-                if (this.Constraints.Length == 0)
-                {
-                    Child.TranslatesAutoresizingMaskIntoConstraints = false;
-                    Child.StretchWidthAndHeight(this);
-                }
+                Child.TranslatesAutoresizingMaskIntoConstraints = false;
+                Child.StretchWidthAndHeight(this);
             }
         }
 
@@ -78,6 +72,8 @@ namespace InterfacesiOS.Views
             if (Child != null)
             {
                 Child.RemoveFromSuperview();
+                this.RemoveConstraints(this.Constraints);
+                this.SetHeight(0);
             }
         }
     }

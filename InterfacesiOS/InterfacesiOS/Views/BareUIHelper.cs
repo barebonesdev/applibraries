@@ -444,14 +444,14 @@ namespace InterfacesiOS.Views
             divider.SetHeight(34);
         }
 
-        public static void AddUnderVisiblity(this UIStackView stackView, UIView view, Binding.BindingHost bindingHost, string propertyName)
+        public static void AddUnderVisiblity(this UIStackView stackView, UIView view, Binding.BindingHost bindingHost, string propertyName, bool invert = false)
         {
             BareUIVisibilityContainer container = new BareUIVisibilityContainer()
             {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 Child = view
             };
-            bindingHost.SetVisibilityBinding(container, propertyName);
+            bindingHost.SetVisibilityBinding(container, propertyName, invert);
             stackView.AddArrangedSubview(container);
             container.StretchWidth(stackView);
         }
