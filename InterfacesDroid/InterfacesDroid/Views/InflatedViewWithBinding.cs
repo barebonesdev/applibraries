@@ -70,7 +70,7 @@ namespace InterfacesDroid.Views
 
         public object DataContext
         {
-            get { return _dataContext.Target; }
+            get { return _dataContext?.Target; }
             set
             {
                 object oldValue = _dataContext?.Target;
@@ -139,8 +139,27 @@ namespace InterfacesDroid.Views
         {
             SetBinding(dataContextSourcePropertyName, delegate
             {
-                var targetProp = target.GetType().GetProperty(targetPropertyName);
-                targetProp.SetValue(target, DataContext.GetType().GetProperty(dataContextSourcePropertyName).GetValue(DataContext));
+                try
+                {
+                    var targetProp = target.GetType().GetProperty(targetPropertyName);
+
+                    object rawValue = DataContext.GetType().GetProperty(dataContextSourcePropertyName).GetValue(DataContext);
+
+                    BindingApplicator.SetTargetProperty(
+                        rawValue: rawValue,
+                        view: target,
+                        targetProperty: targetProp,
+                        converter: null,
+                        converterParameter: null);
+                }
+#if DEBUG
+                catch (Exception ex)
+                {
+                    Debugger.Break();
+                }
+#else
+                catch { }
+#endif
             });
         }
 

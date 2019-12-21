@@ -517,7 +517,7 @@ namespace BareMvvm.Core.Bindings
             }
         }
 
-        static void SetTargetProperty(object rawValue,
+        internal static void SetTargetProperty(object rawValue,
             object view, PropertyInfo targetProperty, IValueConverter converter, string converterParameter)
         {
             try
