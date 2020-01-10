@@ -159,6 +159,7 @@
     <Compile Include="DayOfWeekComboBox.cs" />
     <Compile Include="DeviceInfo.cs" />
     <Compile Include="DynamicFlipViewFolder\DynamicFlipView.cs" />
+    <Compile Include="Controls\TextBlockExtensions.cs" />
     <Compile Include="Extensions\UwpMessageDialog.cs" />
     <Compile Include="FrameAndPopupHost.cs" />
     <Compile Include="FrameworkElementExtender.cs" />
@@ -169,6 +170,7 @@
     <Compile Include="Grouping\IGroupAdapter.cs" />
     <Compile Include="Grouping\IGroupFooter.cs" />
     <Compile Include="Grouping\IGroupHeader.cs" />
+    <Compile Include="Helpers\TextToRichInlinesHelper.cs" />
     <Compile Include="ImageDownloader.cs" />
     <Compile Include="IRenderable.cs" />
     <Compile Include="ListViewWithoutKeyboard.cs" />
