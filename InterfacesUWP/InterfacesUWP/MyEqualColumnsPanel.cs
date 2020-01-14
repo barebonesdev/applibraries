@@ -52,8 +52,7 @@ namespace InterfacesUWP
 
             finally
             {
-                if (HorizontalSnapPointsChanged != null)
-                    HorizontalSnapPointsChanged(this, null);
+                HorizontalSnapPointsChanged?.Invoke(this, null);
             }
         }
 
@@ -67,10 +66,10 @@ namespace InterfacesUWP
 
         private static void OnColumnWidthChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
-            (sender as MyEqualColumnsPanel).OnColumnWidthChanged(e);
+            (sender as MyEqualColumnsPanel).OnColumnWidthChanged();
         }
 
-        private void OnColumnWidthChanged(DependencyPropertyChangedEventArgs e)
+        private void OnColumnWidthChanged()
         {
             base.InvalidateMeasure();
         }
@@ -78,7 +77,13 @@ namespace InterfacesUWP
         public static readonly DependencyProperty ColumnSpacingProperty = DependencyProperty.Register("ColumnSpacing", typeof(double), typeof(MyEqualColumnsPanel), new PropertyMetadata(0.0, OnColumnSpacingChanged));
 
         public event EventHandler<object> HorizontalSnapPointsChanged;
+
+#pragma warning disable 0067
+        /// <summary>
+        /// Note that this does NOT function. It's required for implementing the interface, but not used.
+        /// </summary>
         public event EventHandler<object> VerticalSnapPointsChanged;
+#pragma warning restore 0067
 
         /// <summary>
         /// Spacing that is applied to left and right of each column (adjacent columns merge their spacing so it isn't doubled)
@@ -107,10 +112,10 @@ namespace InterfacesUWP
 
         private static void OnColumnSpacingChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
-            (sender as MyEqualColumnsPanel).OnColumnSpacingChanged(e);
+            (sender as MyEqualColumnsPanel).OnColumnSpacingChanged();
         }
 
-        private void OnColumnSpacingChanged(DependencyPropertyChangedEventArgs e)
+        private void OnColumnSpacingChanged()
         {
             base.InvalidateMeasure();
         }

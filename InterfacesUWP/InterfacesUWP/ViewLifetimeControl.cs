@@ -39,10 +39,10 @@ namespace InterfacesUWP
     public sealed class ViewLifetimeControl : INotifyPropertyChanged
     {
         // Dispatcher for this view. Kept here for sending messages between this view and the main view.
-        CoreDispatcher dispatcher;
+        readonly CoreDispatcher dispatcher;
 
         // Window for this particular view. Used to register and unregister for events
-        CoreWindow window;
+        readonly CoreWindow window;
 
         // The title for the view shown in the list of recently used apps (by setting the title on 
         // ApplicationView)
@@ -58,17 +58,11 @@ namespace InterfacesUWP
         // Each view has a unique Id, found using the ApplicationView.Id property or
         // ApplicationView.GetApplicationViewIdForCoreWindow method. This id is used in all of the ApplicationViewSwitcher
         // and ProjectionManager APIs. 
-        int viewId;
+        readonly int viewId;
 
         // Tracks if this ViewLifetimeControl object is still valid. If this is true, then the view is in the process
         // of closing itself down
         bool released = false;
-
-        // Keeps track of if the consolidated event has fired yet. A view is consolidated with other views
-        // when there's no way for the user to get to it (it's not in the list of recently used apps, cannot be
-        // launched from Start, etc.) A view stops being consolidated when it's visible--at that point
-        // the user can interact with it, move it on or off screen, etc. 
-        bool consolidated = true;
 
         // Used to store pubicly registered events under the protection of a lock
         event ViewReleasedHandler InternalReleased;
@@ -129,8 +123,7 @@ namespace InterfacesUWP
             {
                 UnregisterForEvents();
 
-                if (InternalReleased != null)
-                    InternalReleased(this, null);
+                InternalReleased?.Invoke(this, null);
             }
         }
 
@@ -161,10 +154,7 @@ namespace InterfacesUWP
                 if (title != value)
                 {
                     title = value;
-                    if (PropertyChanged != null)
-                    {
-                        PropertyChanged(this, new PropertyChangedEventArgs("Title"));
-                    }
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Title"));
                 }
             }
         }
