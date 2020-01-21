@@ -10,7 +10,7 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using System.ComponentModel;
-using Android.Support.V7.App;
+using AndroidX.AppCompat.App;
 
 namespace InterfacesDroid.Activities
 {

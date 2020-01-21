@@ -50,10 +50,10 @@ using Java.Lang;
 
 using Enum = System.Enum;
 using Exception = System.Exception;
-using Android.Support.Design.Widget;
 using Android.Widget;
 using ToolsPortable;
 using System.Reflection;
+using Google.Android.Material.TextField;
 
 namespace BareMvvm.Core.Bindings
 {

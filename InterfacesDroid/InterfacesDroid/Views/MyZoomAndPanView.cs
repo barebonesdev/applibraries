@@ -10,7 +10,6 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using static Android.Views.View;
-using Android.Support.V4.View;
 using Android.Graphics;
 using Android.Util;
 using Android.Views.Animations;

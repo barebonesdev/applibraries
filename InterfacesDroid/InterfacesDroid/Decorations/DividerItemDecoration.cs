@@ -9,11 +9,11 @@ using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
-using Android.Support.V7.Widget;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Content.Res;
 using InterfacesDroid.Themes;
+using AndroidX.RecyclerView.Widget;
 
 namespace InterfacesDroid.Decorations
 {

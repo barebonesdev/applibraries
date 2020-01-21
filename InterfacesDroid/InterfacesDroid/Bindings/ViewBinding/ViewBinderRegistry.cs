@@ -39,11 +39,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using InterfacesDroid.Views;
+using AndroidX.AppCompat.Widget;
+using Google.Android.Material.TextField;
 
 #if __ANDROID__ || MONODROID
 using Android.Widget;
-using Android.Support.V7.Widget;
-using Android.Support.Design.Widget;
 #endif
 
 namespace BareMvvm.Core.Bindings
@@ -105,7 +105,7 @@ namespace BareMvvm.Core.Bindings
                     (view, h) => view.RatingBarChange += h, (view, h) => view.RatingBarChange -= h, (view, args) => args.Rating)},
                 {MakeDictionaryKey(typeof(Android.Widget.SearchView), nameof(Android.Widget.SearchView.Query)), new ViewEventBinder<Android.Widget.SearchView, Android.Widget.SearchView.QueryTextChangeEventArgs, string>(
                     (view, h) => view.QueryTextChange += h, (view, h) => view.QueryTextChange -= h, (view, args) => args.NewText)},
-                {MakeDictionaryKey(typeof(Android.Support.V7.Widget.SearchView), nameof(Android.Support.V7.Widget.SearchView.Query)), new ViewEventBinder<Android.Support.V7.Widget.SearchView, Android.Support.V7.Widget.SearchView.QueryTextChangeEventArgs, string>(
+                {MakeDictionaryKey(typeof(AndroidX.AppCompat.Widget.SearchView), nameof(AndroidX.AppCompat.Widget.SearchView.Query)), new ViewEventBinder<AndroidX.AppCompat.Widget.SearchView, AndroidX.AppCompat.Widget.SearchView.QueryTextChangeEventArgs, string>(
                     (view, h) => view.QueryTextChange += h, (view, h) => view.QueryTextChange -= h, (view, args) => args.NewText)},
                 {MakeDictionaryKey(typeof(Switch), nameof(Switch.Checked)), new ViewEventBinder<Switch, Switch.CheckedChangeEventArgs, bool>(
                     (view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
