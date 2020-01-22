@@ -70,6 +70,23 @@ namespace InterfacesiOS.Views.Calendar
             }
         }
 
+        private DateTime? _selectedDate;
+        public DateTime? SelectedDate
+        {
+            get => _selectedDate;
+            set
+            {
+                if ((_selectedDate == null && value == null)
+                    || (_selectedDate != null && value != null && _selectedDate.Value == value.Value.Date))
+                {
+                    return;
+                }
+
+                _selectedDate = value?.Date;
+                UpdateAllViews();
+            }
+        }
+
         private BareUICalendarItemsSourceProvider _provider;
         public BareUICalendarItemsSourceProvider Provider
         {
@@ -112,16 +129,19 @@ namespace InterfacesiOS.Views.Calendar
         protected override void UpdateCurrView(BareUICalendarMonthView curr)
         {
             curr.Month = DisplayMonth;
+            curr.SelectedDate = SelectedDate;
         }
 
         protected override void UpdateNextView(BareUICalendarMonthView next)
         {
             next.Month = DisplayMonth.AddMonths(1);
+            next.SelectedDate = SelectedDate;
         }
 
         protected override void UpdatePrevView(BareUICalendarMonthView prev)
         {
             prev.Month = DisplayMonth.AddMonths(-1);
+            prev.SelectedDate = SelectedDate;
         }
     }
 }

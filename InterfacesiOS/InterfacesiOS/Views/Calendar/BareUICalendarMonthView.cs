@@ -22,8 +22,15 @@ namespace InterfacesiOS.Views.Calendar
         }
     }
 
+    public enum BareUICalendarMonthViewSize
+    {
+        Compact,
+        Full
+    }
+
     public class BareUICalendarMonthView : UIView
     {
+
         public enum DayType
         {
             ThisMonth,
@@ -42,7 +49,7 @@ namespace InterfacesiOS.Views.Calendar
         public virtual float SpacingAfterDayHeaders => 4;
 
         private UIView _viewTitle;
-        private UIView _viewDayHeaders;
+        private DayHeadersView _viewDayHeaders;
         private UIView[] _viewRows;
 
         public DayOfWeek FirstDayOfWeek { get; private set; }
@@ -108,6 +115,41 @@ namespace InterfacesiOS.Views.Calendar
         {
             IBareUICalendarDayView dayView = (IBareUICalendarDayView)sender;
             DateClicked?.Invoke(this, dayView.Date);
+        }
+
+        public override CGRect Bounds
+        {
+            get => base.Bounds;
+            set
+            {
+                // Either Bounds or Frame will be called, so we override both
+                UpdateDisplaySize(value);
+
+                base.Bounds = value;
+            }
+        }
+
+        public override CGRect Frame
+        {
+            get => base.Frame;
+            set
+            {
+                UpdateDisplaySize(value);
+
+                base.Frame = value;
+            }
+        }
+
+        private void UpdateDisplaySize(CGRect newSize)
+        {
+            if (newSize.Height >= 450)
+            {
+                DisplaySize = BareUICalendarMonthViewSize.Full;
+            }
+            else
+            {
+                DisplaySize = BareUICalendarMonthViewSize.Compact;
+            }
         }
 
         public override void LayoutSubviews()
@@ -183,27 +225,58 @@ namespace InterfacesiOS.Views.Calendar
         }
 
         private IBareUICalendarDayView _currSelectedDayView;
-        private DateTime _selectedDate;
-        public DateTime SelectedDate
+        private DateTime? _selectedDate;
+        public DateTime? SelectedDate
         {
             get { return _selectedDate; }
             set
             {
-                if (_selectedDate == value.Date)
+                if ((_selectedDate == null && value == null)
+                    || (_selectedDate != null && value != null && _selectedDate.Value == value.Value.Date))
                 {
                     return;
                 }
 
                 var prevDate = _selectedDate;
-                _selectedDate = value.Date;
+                _selectedDate = value?.Date;
 
-                if (_currSelectedDayView != null)
+                if (_currSelectedDayView != null && prevDate != null)
                 {
-                    UpdateDay(_currSelectedDayView, prevDate, false);
+                    UpdateDay(_currSelectedDayView, prevDate.Value, false);
                     _currSelectedDayView = null;
                 }
 
                 OnSelectedDateChanged();
+            }
+        }
+
+        private BareUICalendarMonthViewSize _displaySize;
+        public BareUICalendarMonthViewSize DisplaySize
+        {
+            get => _displaySize;
+            private set
+            {
+                if (_displaySize != value)
+                {
+                    _displaySize = value;
+                    _viewDayHeaders.UpdateDisplaySize(value);
+
+                    switch (value)
+                    {
+                        case BareUICalendarMonthViewSize.Compact:
+                            _labelMonth.Font = UIFont.PreferredCaption1.Bold();
+                            break;
+
+                        case BareUICalendarMonthViewSize.Full:
+                            _labelMonth.Font = UIFont.PreferredTitle3;
+                            break;
+
+                        default:
+                            throw new NotImplementedException();
+                    }
+
+                    UpdateAllDays();
+                }
             }
         }
 
@@ -235,6 +308,13 @@ namespace InterfacesiOS.Views.Calendar
             if (_labelMonth != null)
                 _labelMonth.Text = Month.ToString("MMMM yyyy");
 
+            UpdateAllDays();
+
+            RefreshData();
+        }
+
+        private void UpdateAllDays()
+        {
             DateTime[,] array = CalendarArray.Generate(Month, FirstDayOfWeek);
 
             for (int row = 0; row < 6; row++)
@@ -247,8 +327,6 @@ namespace InterfacesiOS.Views.Calendar
                     UpdateDay(dayView, date, isSelected: date == SelectedDate);
                 }
             }
-
-            RefreshData();
         }
 
         private void UpdateDay(IBareUICalendarDayView dayView, DateTime date, bool isSelected)
@@ -268,7 +346,7 @@ namespace InterfacesiOS.Views.Calendar
                 dayType = DayType.NextMonth;
             }
 
-            dayView.UpdateDay(date, dayType, date.Date == DateTime.Today, isSelected);
+            dayView.UpdateDay(date, dayType, date.Date == DateTime.Today, isSelected, DisplaySize);
 
             if (isSelected)
             {
@@ -278,6 +356,11 @@ namespace InterfacesiOS.Views.Calendar
 
         protected virtual void OnSelectedDateChanged()
         {
+            if (SelectedDate == null)
+            {
+                return;
+            }
+
             DateTime[,] array = CalendarArray.Generate(Month, FirstDayOfWeek);
 
             for (int row = 0; row < 6; row++)
@@ -301,12 +384,12 @@ namespace InterfacesiOS.Views.Calendar
         {
             _labelMonth = new UILabel()
             {
-                Font = UIFont.PreferredTitle3
+                Font = UIFont.PreferredCaption1.Bold()
             };
             return _labelMonth;
         }
 
-        protected virtual UIView CreateDayHeaders()
+        protected virtual DayHeadersView CreateDayHeaders()
         {
             return new DayHeadersView(FirstDayOfWeek);
         }
@@ -323,7 +406,7 @@ namespace InterfacesiOS.Views.Calendar
                     var label = new UILabel()
                     {
                         Text = DateTools.ToLocalizedString(day).Substring(0, 1).ToUpper(),
-                        Font = UIFont.PreferredCaption1,
+                        Font = UIFont.PreferredCaption2,
                         TextAlignment = UITextAlignment.Center
                     };
 
@@ -355,6 +438,30 @@ namespace InterfacesiOS.Views.Calendar
                         y: 0,
                         width: each,
                         height: heightOfText);
+                }
+            }
+
+            public void UpdateDisplaySize(BareUICalendarMonthViewSize displaySize)
+            {
+                UIFont font;
+
+                switch (displaySize)
+                {
+                    case BareUICalendarMonthViewSize.Compact:
+                        font = UIFont.PreferredCaption2;
+                        break;
+
+                    case BareUICalendarMonthViewSize.Full:
+                        font = UIFont.PreferredCaption1;
+                        break;
+
+                    default:
+                        throw new NotImplementedException();
+                }
+
+                foreach (var label in this.Subviews.OfType<UILabel>())
+                {
+                    label.Font = font;
                 }
             }
         }
@@ -451,7 +558,7 @@ namespace InterfacesiOS.Views.Calendar
         DateTime Date { get; }
         UIView ItemsView { get; }
 
-        void UpdateDay(DateTime date, BareUICalendarMonthView.DayType dayType, bool isToday, bool isSelected);
+        void UpdateDay(DateTime date, BareUICalendarMonthView.DayType dayType, bool isToday, bool isSelected, BareUICalendarMonthViewSize displaySize);
 
         void SetBackgroundColor(CGColor color);
     }
@@ -460,7 +567,7 @@ namespace InterfacesiOS.Views.Calendar
     {
         private BareUIEllipseView _backgroundCircle;
         private UILabel _labelDay;
-        private UIView _itemsView;
+        private BareUICalendarCircleItemsView _itemsView;
 
         public BareUICalendarDayView()
         {
@@ -473,7 +580,7 @@ namespace InterfacesiOS.Views.Calendar
 
             _labelDay = new UILabel()
             {
-                Font = UIFont.PreferredBody,
+                Font = UIFont.PreferredCaption1,
                 TextAlignment = UITextAlignment.Center
             };
             this.Add(_labelDay);
@@ -482,25 +589,58 @@ namespace InterfacesiOS.Views.Calendar
             this.Add(_itemsView);
         }
 
-        private static readonly nfloat TOP_SPACING = 4;
-        private static readonly nfloat CIRCLE_HEIGHT = 35;
         private static readonly nfloat SPACING_AFTER_CIRCLE = 4;
+
+        private nfloat GetSpacing()
+        {
+            switch (_displaySize)
+            {
+                case BareUICalendarMonthViewSize.Compact:
+                    return 3;
+
+                case BareUICalendarMonthViewSize.Full:
+                    return 4;
+
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        private nfloat GetCircleHeight()
+        {
+            switch (_displaySize)
+            {
+                case BareUICalendarMonthViewSize.Compact:
+                    return 24;
+
+                case BareUICalendarMonthViewSize.Full:
+                    return 35;
+
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        private BareUICalendarMonthViewSize _displaySize;
 
         public override void LayoutSubviews()
         {
+            var circleHeight = GetCircleHeight();
+            var spacing = GetSpacing();
+
             _backgroundCircle.Frame = new CGRect(
                 x: 0,
-                y: TOP_SPACING,
+                y: spacing,
                 width: this.Frame.Width,
-                height: CIRCLE_HEIGHT);
+                height: circleHeight);
 
             _labelDay.Frame = new CGRect(
                 x: 0,
-                y: TOP_SPACING,
+                y: spacing,
                 width: this.Frame.Width,
-                height: CIRCLE_HEIGHT);
+                height: circleHeight);
 
-            nfloat y = TOP_SPACING + CIRCLE_HEIGHT + SPACING_AFTER_CIRCLE;
+            nfloat y = spacing + circleHeight + spacing;
             nfloat remainingHeight = this.Frame.Height - y;
             remainingHeight = remainingHeight >= 0 ? remainingHeight : 0;
 
@@ -524,11 +664,33 @@ namespace InterfacesiOS.Views.Calendar
 
         public UIView ItemsView => _itemsView;
 
-        public void UpdateDay(DateTime date, BareUICalendarMonthView.DayType dayType, bool isToday, bool isSelected)
+        public void UpdateDay(DateTime date, BareUICalendarMonthView.DayType dayType, bool isToday, bool isSelected, BareUICalendarMonthViewSize displaySize)
         {
             Date = date.Date;
 
             _labelDay.Text = date.Day.ToString();
+
+            if (_displaySize != displaySize)
+            {
+                _displaySize = displaySize;
+                _itemsView.DisplaySize = displaySize;
+
+                switch (displaySize)
+                {
+                    case BareUICalendarMonthViewSize.Compact:
+                        _labelDay.Font = UIFont.PreferredCaption1;
+                        break;
+
+                    case BareUICalendarMonthViewSize.Full:
+                        _labelDay.Font = UIFont.PreferredBody;
+                        break;
+
+                    default:
+                        throw new NotImplementedException();
+                }
+
+                SetNeedsLayout();
+            }
 
             if (dayType == BareUICalendarMonthView.DayType.NextMonth || dayType == BareUICalendarMonthView.DayType.PrevMonth)
             {
@@ -583,12 +745,53 @@ namespace InterfacesiOS.Views.Calendar
 
     public class BareUICalendarCircleItemsView : UIView
     {
-        public static readonly nfloat CIRCLE_SIZE = 8;
-        public static readonly nfloat SPACING = 4;
-
         public BareUICalendarCircleItemsView()
         {
             UserInteractionEnabled = false;
+        }
+
+        private BareUICalendarMonthViewSize _displaySize;
+        public BareUICalendarMonthViewSize DisplaySize
+        {
+            get => _displaySize;
+            set
+            {
+                if (_displaySize != value)
+                {
+                    _displaySize = value;
+                    SetNeedsLayout();
+                }
+            }
+        }
+
+        public nfloat GetCircleSize()
+        {
+            switch (DisplaySize)
+            {
+                case BareUICalendarMonthViewSize.Compact:
+                    return 5;
+
+                case BareUICalendarMonthViewSize.Full:
+                    return 8;
+
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        public nfloat GetSpacing()
+        {
+            switch (DisplaySize)
+            {
+                case BareUICalendarMonthViewSize.Compact:
+                    return 2;
+
+                case BareUICalendarMonthViewSize.Full:
+                    return 4;
+
+                default:
+                    throw new NotImplementedException();
+            }
         }
 
         public override CGSize SizeThatFits(CGSize size)
@@ -599,9 +802,9 @@ namespace InterfacesiOS.Views.Calendar
                 return new CGSize();
             }
 
-            nfloat totalSpacing = (count - 1) * SPACING;
-            nfloat totalWidth = count * CIRCLE_SIZE + totalSpacing;
-            nfloat itemSize = CIRCLE_SIZE;
+            nfloat totalSpacing = (count - 1) * GetSpacing();
+            nfloat totalWidth = count * GetCircleSize() + totalSpacing;
+            nfloat itemSize = GetCircleSize();
 
             if (totalWidth > size.Width)
             {
@@ -639,9 +842,9 @@ namespace InterfacesiOS.Views.Calendar
             nfloat x = 0;
             nfloat y = 0;
 
-            if (itemSize < CIRCLE_SIZE)
+            if (itemSize < GetCircleSize())
             {
-                y = (CIRCLE_SIZE - itemSize) / 2;
+                y = (GetCircleSize() - itemSize) / 2;
             }
 
             if (finalSize.Width < this.Frame.Width)
@@ -657,7 +860,7 @@ namespace InterfacesiOS.Views.Calendar
                     width: itemSize,
                     height: itemSize);
 
-                x += itemSize + SPACING;
+                x += itemSize + GetSpacing();
             }
         }
     }

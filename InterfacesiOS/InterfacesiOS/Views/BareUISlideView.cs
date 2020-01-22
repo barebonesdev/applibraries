@@ -60,8 +60,17 @@ namespace InterfacesiOS.Views
             yield return _nextView;
         }
 
+        private nfloat _prevFrameWidth;
+
         private void _scrollView_Scrolled(object sender, EventArgs e)
         {
+            // Don't alter while resizing (happens when rotating from landscape/portrait)
+            if (this.Frame.Width != _prevFrameWidth)
+            {
+                _prevFrameWidth = this.Frame.Width;
+                return;
+            }
+
             // Moving to the left
             if (this.ContentOffset.X <= 0)
             {
