@@ -140,6 +140,20 @@ namespace InterfacesiOS.Views.Calendar
             }
         }
 
+        private bool _displayMonth = false;
+        public bool DisplayMonth
+        {
+            get => _displayMonth;
+            set
+            {
+                if (_displayMonth != value)
+                {
+                    _displayMonth = value;
+                    SetNeedsLayout();
+                }
+            }
+        }
+
         private void UpdateDisplaySize(CGRect newSize)
         {
             if (newSize.Height >= 450)
@@ -154,18 +168,28 @@ namespace InterfacesiOS.Views.Calendar
 
         public override void LayoutSubviews()
         {
-            var titleSize = _viewTitle.SizeThatFits(this.Frame.Size);
-            var dayHeadersSize = _viewDayHeaders.SizeThatFits(new CGSize(this.Frame.Width, this.Frame.Height));
-
             nfloat y = TopPadding;
 
-            _viewTitle.Frame = new CGRect(
-                x: 16,
-                y: y,
-                width: this.Frame.Width,
-                height: titleSize.Height);
+            if (DisplayMonth)
+            {
+                _viewTitle.Hidden = false;
 
-            y += titleSize.Height + SpacingAfterTitle;
+                var titleSize = _viewTitle.SizeThatFits(this.Frame.Size);
+                _viewTitle.Frame = new CGRect(
+                    x: 16,
+                    y: y,
+                    width: this.Frame.Width,
+                    height: titleSize.Height);
+
+                y += titleSize.Height + SpacingAfterTitle;
+            }
+
+            else
+            {
+                _viewTitle.Hidden = true;
+            }
+
+            var dayHeadersSize = _viewDayHeaders.SizeThatFits(new CGSize(this.Frame.Width, this.Frame.Height));
 
             _viewDayHeaders.Frame = new CGRect(
                 x: 0,
