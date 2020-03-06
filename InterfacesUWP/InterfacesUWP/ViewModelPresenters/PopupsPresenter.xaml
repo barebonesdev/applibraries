@@ -20,18 +20,29 @@
             Opacity="0.3"
             Tapped="RectangleBackdrop_Tapped"/>
 
-        <ItemsControl x:Name="ItemsControlPopups" ItemsSource="{Binding ViewModel.Popups, ElementName=ThisView}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <local:GenericViewModelPresenter ViewModel="{Binding}" />
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <controls:PopupsPanel />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-        </ItemsControl>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <ItemsControl x:Name="ItemsControlPopups" ItemsSource="{Binding ViewModel.Popups, ElementName=ThisView}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <local:GenericViewModelPresenter ViewModel="{Binding}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <controls:PopupsPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+
+            <Border
+                x:Name="KeyboardOcclusion"
+                Grid.Row="1"/>
+        </Grid>
 
     </Grid>
 
