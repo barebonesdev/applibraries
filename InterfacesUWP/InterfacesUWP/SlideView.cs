@@ -100,16 +100,10 @@ namespace InterfacesUWP
 
         private void calculateNumberOfColumns()
         {
-            if (GetActualWidth() == 0 || MinimumColumnWidth == double.PositiveInfinity)
+            if (_arrangedWidth == 0 || MinimumColumnWidth == double.PositiveInfinity)
                 return;
 
-            Columns = Math.Max((int)(GetActualWidth() / MinimumColumnWidth), 1);
-        }
-
-        private double GetActualWidth()
-        {
-            return base.ActualWidth;
-            //return Math.Max(base.ActualWidth - ColumnSpacing, 0);
+            Columns = Math.Max((int)(_arrangedWidth / MinimumColumnWidth), 1);
         }
 
         #region Columns
@@ -144,7 +138,7 @@ namespace InterfacesUWP
         {
             get
             {
-                return (GetActualWidth() - (Columns + 1) * ColumnSpacing) / Columns;
+                return (_arrangedWidth - (Columns + 1) * ColumnSpacing) / Columns;
             }
         }
 
@@ -221,8 +215,6 @@ namespace InterfacesUWP
 
             base.HorizontalAlignment = Windows.UI.Xaml.HorizontalAlignment.Stretch;
             base.VerticalAlignment = Windows.UI.Xaml.VerticalAlignment.Stretch;
-
-            base.SizeChanged += MyFlipView_SizeChanged;
             
         }
 
@@ -303,13 +295,21 @@ namespace InterfacesUWP
             }
         }
 
-        void MyFlipView_SizeChanged(object sender, SizeChangedEventArgs e)
+        private double _arrangedWidth;
+
+        protected override Size ArrangeOverride(Size finalSize)
         {
+            _arrangedWidth = finalSize.Width;
+
+            base.ArrangeOverride(finalSize);
+
             calculateNumberOfColumns();
 
             setColumnWidth();
 
             setWithoutSnap(TotalColumnWidth());
+
+            return finalSize;
         }
 
         # endregion

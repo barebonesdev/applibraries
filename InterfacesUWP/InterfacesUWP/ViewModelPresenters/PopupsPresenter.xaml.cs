@@ -8,6 +8,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using ToolsPortable;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -31,6 +32,12 @@ namespace InterfacesUWP.ViewModelPresenters
 
             this.HorizontalAlignment = HorizontalAlignment.Stretch;
             this.VerticalAlignment = VerticalAlignment.Stretch;
+
+            var inputPane = InputPane.GetForCurrentView();
+            inputPane.Showing += InputPane_Changed;
+            inputPane.Hiding += InputPane_Changed;
+
+            UpdateInputPaneOcclusion();
         }
 
         public PagedViewModelWithPopups ViewModel
@@ -96,6 +103,32 @@ namespace InterfacesUWP.ViewModelPresenters
                 ViewModel.TryClearPopupsViaUserInteraction();
                 e.Handled = true;
             }
+        }
+
+        private void InputPane_Changed(InputPane sender, InputPaneVisibilityEventArgs args)
+        {
+            UpdateInputPaneOcclusion();
+        }
+
+        private void UpdateInputPaneOcclusion()
+        {
+            try
+            {
+                var inputPane = InputPane.GetForCurrentView();
+
+                if (inputPane.OccludedRect.Height > 0)
+                {
+                    if (inputPane.OccludedRect.Top != 0)
+                    {
+                        KeyboardOcclusion.MinHeight = inputPane.OccludedRect.Height;
+                        return;
+                    }
+                }
+
+                // All other cases, act as if it's hidden
+                KeyboardOcclusion.MinHeight = 0;
+            }
+            catch { }
         }
     }
 }
