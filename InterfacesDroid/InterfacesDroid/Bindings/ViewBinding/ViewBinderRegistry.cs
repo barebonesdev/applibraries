@@ -42,6 +42,7 @@ using InterfacesDroid.Views;
 using AndroidX.AppCompat.Widget;
 using Google.Android.Material.TextField;
 using Google.Android.Material.CheckBox;
+using Google.Android.Material.RadioButton;
 
 #if __ANDROID__ || MONODROID
 using Android.Widget;
@@ -99,6 +100,8 @@ namespace BareMvvm.Core.Bindings
 				{MakeDictionaryKey(typeof(RadioButton), nameof(RadioButton.Checked)), new ViewEventBinder<RadioButton, RadioButton.CheckedChangeEventArgs, bool>(
 					(view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
 				{MakeDictionaryKey(typeof(AppCompatRadioButton), nameof(AppCompatRadioButton.Checked)), new ViewEventBinder<AppCompatRadioButton, AppCompatRadioButton.CheckedChangeEventArgs, bool>(
+					(view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
+				{MakeDictionaryKey(typeof(MaterialRadioButton), nameof(MaterialRadioButton.Checked)), new ViewEventBinder<MaterialRadioButton, CompoundButton.CheckedChangeEventArgs, bool>(
 					(view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
 				{MakeDictionaryKey(typeof(RatingBar), nameof(RatingBar.Rating)), new ViewEventBinder<RatingBar, RatingBar.RatingBarChangeEventArgs, float>(
 					(view, h) => view.RatingBarChange += h, (view, h) => view.RatingBarChange -= h, (view, args) => args.Rating)},
