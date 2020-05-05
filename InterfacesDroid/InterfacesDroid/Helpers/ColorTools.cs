@@ -11,6 +11,7 @@ using Android.Views;
 using Android.Widget;
 using Android.Graphics;
 using Android.Content.Res;
+using AndroidX.Core.Content;
 
 namespace InterfacesDroid.Helpers
 {
@@ -42,6 +43,37 @@ namespace InterfacesDroid.Helpers
                 {
                     color
                 });
+        }
+
+        public static bool IsInNightMode(Context context)
+        {
+            try
+            {
+                //Ensure the device is running Android Froyo or higher because UIMode was added in Android Froyo, API 8.0
+                if (Build.VERSION.SdkInt >= BuildVersionCodes.Froyo)
+                {
+                    var uiModeFlags = context.Resources.Configuration.UiMode & UiMode.NightMask;
+
+                    switch (uiModeFlags)
+                    {
+                        case UiMode.NightYes:
+                            return true;
+
+                        default:
+                            return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch { return false; }
+        }
+
+        public static Color GetColor(Context context, int resource)
+        {
+            return new Color(ContextCompat.GetColor(context, resource));
         }
     }
 }

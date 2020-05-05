@@ -41,6 +41,7 @@ using System.Linq;
 using InterfacesDroid.Views;
 using AndroidX.AppCompat.Widget;
 using Google.Android.Material.TextField;
+using Google.Android.Material.CheckBox;
 
 #if __ANDROID__ || MONODROID
 using Android.Widget;
@@ -85,48 +86,50 @@ namespace BareMvvm.Core.Bindings
 			binderDictionary[key] = viewBinder;
 		}
 
-        readonly Dictionary<string, IViewBinder> binderDictionary
-            = new Dictionary<string, IViewBinder>
-            {
+		readonly Dictionary<string, IViewBinder> binderDictionary
+			= new Dictionary<string, IViewBinder>
+			{
 #if __ANDROID__ || MONODROID
 				{MakeDictionaryKey(typeof(CalendarView), nameof(CalendarView.Date)), new ViewEventBinder<CalendarView, CalendarView.DateChangeEventArgs, DateTime>(
-                    (view, h) => view.DateChange += h, (view, h) => view.DateChange -= h, (view, args) => new DateTime(args.Year, args.Month, args.DayOfMonth))},
-                {MakeDictionaryKey(typeof(CheckBox), nameof(CheckBox.Checked)), new ViewEventBinder<CheckBox, CheckBox.CheckedChangeEventArgs, bool>(
-                    (view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
-                {MakeDictionaryKey(typeof(AppCompatCheckBox), nameof(AppCompatCheckBox.Checked)), new ViewEventBinder<AppCompatCheckBox, AppCompatCheckBox.CheckedChangeEventArgs, bool>(
-                    (view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
-                {MakeDictionaryKey(typeof(RadioButton), nameof(RadioButton.Checked)), new ViewEventBinder<RadioButton, RadioButton.CheckedChangeEventArgs, bool>(
-                    (view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
-                {MakeDictionaryKey(typeof(AppCompatRadioButton), nameof(AppCompatRadioButton.Checked)), new ViewEventBinder<AppCompatRadioButton, AppCompatRadioButton.CheckedChangeEventArgs, bool>(
-                    (view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
-                {MakeDictionaryKey(typeof(RatingBar), nameof(RatingBar.Rating)), new ViewEventBinder<RatingBar, RatingBar.RatingBarChangeEventArgs, float>(
-                    (view, h) => view.RatingBarChange += h, (view, h) => view.RatingBarChange -= h, (view, args) => args.Rating)},
-                {MakeDictionaryKey(typeof(AppCompatRatingBar), nameof(AppCompatRatingBar.Rating)), new ViewEventBinder<AppCompatRatingBar, AppCompatRatingBar.RatingBarChangeEventArgs, float>(
-                    (view, h) => view.RatingBarChange += h, (view, h) => view.RatingBarChange -= h, (view, args) => args.Rating)},
-                {MakeDictionaryKey(typeof(Android.Widget.SearchView), nameof(Android.Widget.SearchView.Query)), new ViewEventBinder<Android.Widget.SearchView, Android.Widget.SearchView.QueryTextChangeEventArgs, string>(
-                    (view, h) => view.QueryTextChange += h, (view, h) => view.QueryTextChange -= h, (view, args) => args.NewText)},
-                {MakeDictionaryKey(typeof(AndroidX.AppCompat.Widget.SearchView), nameof(AndroidX.AppCompat.Widget.SearchView.Query)), new ViewEventBinder<AndroidX.AppCompat.Widget.SearchView, AndroidX.AppCompat.Widget.SearchView.QueryTextChangeEventArgs, string>(
-                    (view, h) => view.QueryTextChange += h, (view, h) => view.QueryTextChange -= h, (view, args) => args.NewText)},
-                {MakeDictionaryKey(typeof(Switch), nameof(Switch.Checked)), new ViewEventBinder<Switch, Switch.CheckedChangeEventArgs, bool>(
-                    (view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
-                {MakeDictionaryKey(typeof(SwitchCompat), nameof(SwitchCompat.Checked)), new ViewEventBinder<SwitchCompat, SwitchCompat.CheckedChangeEventArgs, bool>(
-                    (view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
-                {MakeDictionaryKey(typeof(TimePicker), nameof(TimePicker.Minute)), new ViewEventBinder<TimePicker, TimePicker.TimeChangedEventArgs, int>(
-                    (view, h) => view.TimeChanged += h, (view, h) => view.TimeChanged -= h, (view, args) => args.Minute)},
-                {MakeDictionaryKey(typeof(TimePicker), nameof(TimePicker.Hour)), new ViewEventBinder<TimePicker, TimePicker.TimeChangedEventArgs, int>(
-                    (view, h) => view.TimeChanged += h, (view, h) => view.TimeChanged -= h, (view, args) => args.HourOfDay)},
-                {MakeDictionaryKey(typeof(EditText), nameof(EditText.Text)), new ViewEventBinder<EditText, Android.Text.TextChangedEventArgs, string>(
-                    (view, h) => view.TextChanged += h, (view, h) => view.TextChanged -= h, (view, args) => args.Text.ToString())},
-                {MakeDictionaryKey(typeof(AppCompatEditText), nameof(AppCompatEditText.Text)), new ViewEventBinder<AppCompatEditText, Android.Text.TextChangedEventArgs, string>(
-                    (view, h) => view.TextChanged += h, (view, h) => view.TextChanged -= h, (view, args) => args.Text.ToString())},
-                {MakeDictionaryKey(typeof(ToggleButton), nameof(ToggleButton.Text)), new ViewEventBinder<ToggleButton, CompoundButton.CheckedChangeEventArgs, bool>(
-                    (view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
-                {MakeDictionaryKey(typeof(SeekBar), nameof(SeekBar.Progress)), new ViewEventBinder<SeekBar, SeekBar.ProgressChangedEventArgs, int>(
-                    (view, h) => view.ProgressChanged += h, (view, h) => view.ProgressChanged -= h, (view, args) => args.Progress)},
-                {MakeDictionaryKey(typeof(TextInputEditText), nameof(TextInputEditText.Text)), new ViewEventBinder<TextInputEditText, Android.Text.TextChangedEventArgs, string>(
-                    (view, h) => view.TextChanged += h, (view, h) => view.TextChanged -= h, (view, args) => args.Text.ToString())},
-                {MakeDictionaryKey(typeof(InlineDatePicker), nameof(InlineDatePicker.Date)), new ViewEventBinder<InlineDatePicker, DateTime, DateTime>(
-                    (view, h) => view.DateChanged += h, (view, h) => view.DateChanged -= h, (view, args) => args) },
+					(view, h) => view.DateChange += h, (view, h) => view.DateChange -= h, (view, args) => new DateTime(args.Year, args.Month, args.DayOfMonth))},
+				{MakeDictionaryKey(typeof(CheckBox), nameof(CheckBox.Checked)), new ViewEventBinder<CheckBox, CheckBox.CheckedChangeEventArgs, bool>(
+					(view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
+				{MakeDictionaryKey(typeof(AppCompatCheckBox), nameof(AppCompatCheckBox.Checked)), new ViewEventBinder<AppCompatCheckBox, AppCompatCheckBox.CheckedChangeEventArgs, bool>(
+					(view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
+				{MakeDictionaryKey(typeof(RadioButton), nameof(RadioButton.Checked)), new ViewEventBinder<RadioButton, RadioButton.CheckedChangeEventArgs, bool>(
+					(view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
+				{MakeDictionaryKey(typeof(AppCompatRadioButton), nameof(AppCompatRadioButton.Checked)), new ViewEventBinder<AppCompatRadioButton, AppCompatRadioButton.CheckedChangeEventArgs, bool>(
+					(view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
+				{MakeDictionaryKey(typeof(RatingBar), nameof(RatingBar.Rating)), new ViewEventBinder<RatingBar, RatingBar.RatingBarChangeEventArgs, float>(
+					(view, h) => view.RatingBarChange += h, (view, h) => view.RatingBarChange -= h, (view, args) => args.Rating)},
+				{MakeDictionaryKey(typeof(AppCompatRatingBar), nameof(AppCompatRatingBar.Rating)), new ViewEventBinder<AppCompatRatingBar, AppCompatRatingBar.RatingBarChangeEventArgs, float>(
+					(view, h) => view.RatingBarChange += h, (view, h) => view.RatingBarChange -= h, (view, args) => args.Rating)},
+				{MakeDictionaryKey(typeof(Android.Widget.SearchView), nameof(Android.Widget.SearchView.Query)), new ViewEventBinder<Android.Widget.SearchView, Android.Widget.SearchView.QueryTextChangeEventArgs, string>(
+					(view, h) => view.QueryTextChange += h, (view, h) => view.QueryTextChange -= h, (view, args) => args.NewText)},
+				{MakeDictionaryKey(typeof(AndroidX.AppCompat.Widget.SearchView), nameof(AndroidX.AppCompat.Widget.SearchView.Query)), new ViewEventBinder<AndroidX.AppCompat.Widget.SearchView, AndroidX.AppCompat.Widget.SearchView.QueryTextChangeEventArgs, string>(
+					(view, h) => view.QueryTextChange += h, (view, h) => view.QueryTextChange -= h, (view, args) => args.NewText)},
+				{MakeDictionaryKey(typeof(Switch), nameof(Switch.Checked)), new ViewEventBinder<Switch, Switch.CheckedChangeEventArgs, bool>(
+					(view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
+				{MakeDictionaryKey(typeof(SwitchCompat), nameof(SwitchCompat.Checked)), new ViewEventBinder<SwitchCompat, SwitchCompat.CheckedChangeEventArgs, bool>(
+					(view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
+				{MakeDictionaryKey(typeof(TimePicker), nameof(TimePicker.Minute)), new ViewEventBinder<TimePicker, TimePicker.TimeChangedEventArgs, int>(
+					(view, h) => view.TimeChanged += h, (view, h) => view.TimeChanged -= h, (view, args) => args.Minute)},
+				{MakeDictionaryKey(typeof(TimePicker), nameof(TimePicker.Hour)), new ViewEventBinder<TimePicker, TimePicker.TimeChangedEventArgs, int>(
+					(view, h) => view.TimeChanged += h, (view, h) => view.TimeChanged -= h, (view, args) => args.HourOfDay)},
+				{MakeDictionaryKey(typeof(EditText), nameof(EditText.Text)), new ViewEventBinder<EditText, Android.Text.TextChangedEventArgs, string>(
+					(view, h) => view.TextChanged += h, (view, h) => view.TextChanged -= h, (view, args) => args.Text.ToString())},
+				{MakeDictionaryKey(typeof(AppCompatEditText), nameof(AppCompatEditText.Text)), new ViewEventBinder<AppCompatEditText, Android.Text.TextChangedEventArgs, string>(
+					(view, h) => view.TextChanged += h, (view, h) => view.TextChanged -= h, (view, args) => args.Text.ToString())},
+				{MakeDictionaryKey(typeof(ToggleButton), nameof(ToggleButton.Text)), new ViewEventBinder<ToggleButton, CompoundButton.CheckedChangeEventArgs, bool>(
+					(view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked)},
+				{MakeDictionaryKey(typeof(SeekBar), nameof(SeekBar.Progress)), new ViewEventBinder<SeekBar, SeekBar.ProgressChangedEventArgs, int>(
+					(view, h) => view.ProgressChanged += h, (view, h) => view.ProgressChanged -= h, (view, args) => args.Progress)},
+				{MakeDictionaryKey(typeof(TextInputEditText), nameof(TextInputEditText.Text)), new ViewEventBinder<TextInputEditText, Android.Text.TextChangedEventArgs, string>(
+					(view, h) => view.TextChanged += h, (view, h) => view.TextChanged -= h, (view, args) => args.Text.ToString())},
+				{MakeDictionaryKey(typeof(InlineDatePicker), nameof(InlineDatePicker.Date)), new ViewEventBinder<InlineDatePicker, DateTime, DateTime>(
+					(view, h) => view.DateChanged += h, (view, h) => view.DateChanged -= h, (view, args) => args) },
+				{MakeDictionaryKey(typeof(MaterialCheckBox), nameof(MaterialCheckBox.Checked)), new ViewEventBinder<MaterialCheckBox, CompoundButton.CheckedChangeEventArgs, bool>(
+					(view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked) },
 #endif
 			};
 	}
