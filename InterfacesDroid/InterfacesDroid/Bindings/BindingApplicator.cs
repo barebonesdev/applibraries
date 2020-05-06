@@ -35,9 +35,9 @@
 #endregion
 
 using Android.Content.Res;
-using Android.Support.V4.View;
 using Android.Views;
 using Android.Widget;
+using AndroidX.Core.View;
 using InterfacesDroid.Helpers;
 using System;
 using System.Collections.Generic;

@@ -8,12 +8,12 @@ using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
-using Android.Support.V7.Widget;
 using System.Collections;
 using InterfacesDroid.DataTemplates;
 using System.Collections.Specialized;
 using ToolsPortable;
 using InterfacesDroid.Views;
+using AndroidX.RecyclerView.Widget;
 
 namespace InterfacesDroid.Adapters
 {
