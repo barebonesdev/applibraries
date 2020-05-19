@@ -27,7 +27,7 @@ namespace InterfacesiOS.Views
             Switch = new UISwitch();
             this.Add(Switch);
 
-            // Idk why, but on the add homework page, if the keyboard is up, this doesn't get hit
+            // Idk why, but on the add task page, if the keyboard is up, this doesn't get hit
             // even though on the inline edit controls the same code works. I investigated for 20 mins
             // and couldn't figure it out. It works on the edit schedule times page for some reason.
             this.TouchUpInside += BareUISwitch_TouchUpInside;
