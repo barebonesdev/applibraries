@@ -68,7 +68,8 @@ namespace InterfacesiOS.Views
             UIView snackbarContainer = new UIView()
             {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-                BackgroundColor = UIColor.Black
+                BackgroundColor = UIColor.Black,
+                Alpha = 0
             };
             snackbarContainer.Layer.CornerRadius = 5;
             this.AddSubview(snackbarContainer);
@@ -115,14 +116,27 @@ namespace InterfacesiOS.Views
             }
 
             _currentSnackbar = snackbarContainer;
+
+            UIView.Animate(duration: 0.5, delegate
+            {
+                snackbarContainer.Alpha = 1;
+            });
         }
 
         private void RemoveSnackbar()
         {
             if (_currentSnackbar != null)
             {
-                _currentSnackbar.RemoveFromSuperview();
+                var snackbarToFadeOut = _currentSnackbar;
                 _currentSnackbar = null;
+
+                UIView.Animate(duration: 0.5, delegate
+                {
+                    snackbarToFadeOut.Alpha = 0;
+                }, delegate
+                {
+                    snackbarToFadeOut.RemoveFromSuperview();
+                });
             }
         }
     }
