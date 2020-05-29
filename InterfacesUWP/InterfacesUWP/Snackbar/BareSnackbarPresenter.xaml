@@ -9,6 +9,26 @@
     d:DesignHeight="300"
     d:DesignWidth="400">
 
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Default">
+
+                    <SolidColorBrush x:Key="SnackbarBackground" Color="#222222"/>
+                    <SolidColorBrush x:Key="SnackbarActionForeground" Color="#8494FF"/>
+
+                </ResourceDictionary>
+
+                <ResourceDictionary x:Key="Dark">
+
+                    <SolidColorBrush x:Key="SnackbarBackground" Color="#AAAAAA"/>
+                    <SolidColorBrush x:Key="SnackbarActionForeground" Color="#5166BC"/>
+
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
     <Grid>
         <ItemsControl
             ItemsSource="{Binding DisplayedSnackbars}"
@@ -28,12 +48,12 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <Border
-                            Background="Black"
+                            Background="{ThemeResource SnackbarBackground}"
                             CornerRadius="4"
                             Grid.ColumnSpan="2"/>
                         <TextBlock
                             Text="{Binding Message}"
-                            Foreground="White"
+                            Foreground="{ThemeResource ApplicationPageBackgroundThemeBrush}"
                             Margin="12"/>
                         <Button
                             x:Name="ButtonAction"
@@ -41,7 +61,7 @@
                             Visibility="{Binding ButtonText, Converter={StaticResource NotNullToVisibilityConverter}}"
                             Style="{StaticResource TextBlockButtonStyle}"
                             RequestedTheme="Dark"
-                            Foreground="#6D8AFF"
+                            Foreground="{ThemeResource SnackbarActionForeground}"
                             Margin="0,0,6,0"
                             Grid.Column="1"
                             FontWeight="Bold"
