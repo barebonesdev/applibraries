@@ -33,7 +33,10 @@ namespace InterfacesDroid.Windows
         public NativeDroidAppWindow(BareActivity activity)
         {
             Activity = activity;
-            _presenter = new GenericViewModelPresenter(activity);
+            _presenter = new GenericViewModelPresenter(activity)
+            {
+                LayoutParameters = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MatchParent, CoordinatorLayout.LayoutParams.MatchParent)
+            };
 
             // CoordinatorLayout is needed so snackbars can be swipeable
             _coordinatorLayout = new CoordinatorLayout(activity);
