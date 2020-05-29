@@ -35,7 +35,7 @@ namespace InterfacesUWP.AppWindows
 
             Window = Window.Current;
 
-            Window.Content = _presenter;
+            Window.Content = this;
 
             // Back button
             _navigationManager = SystemNavigationManagerEnhanced.GetForCurrentView();

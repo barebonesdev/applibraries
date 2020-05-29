@@ -10,27 +10,45 @@
     d:DesignWidth="400">
 
     <Grid>
-        <ContentPresenter
-            Content="{Binding CurrentSnackbar}"
-            VerticalAlignment="Bottom">
-            <ContentPresenter.ContentTransitions>
+        <ItemsControl
+            ItemsSource="{Binding DisplayedSnackbars}"
+            VerticalAlignment="Bottom"
+            HorizontalAlignment="Stretch"
+            Margin="20,0,20,20">
+            <ItemsControl.ItemContainerTransitions>
                 <TransitionCollection>
-                    <EntranceThemeTransition/>
+                    <PopupThemeTransition />
                 </TransitionCollection>
-            </ContentPresenter.ContentTransitions>
-            <ContentPresenter.ContentTemplate>
+            </ItemsControl.ItemContainerTransitions>
+            <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Grid Background="Black">
+                    <Grid Background="Transparent" HorizontalAlignment="Center" x:Name="Snackbar" Tapped="Snackbar_Tapped">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
+                        <Border
+                            Background="Black"
+                            CornerRadius="4"
+                            Grid.ColumnSpan="2"/>
                         <TextBlock
                             Text="{Binding Message}"
-                            Foreground="White"/>
+                            Foreground="White"
+                            Margin="12"/>
+                        <Button
+                            x:Name="ButtonAction"
+                            Content="{Binding ButtonText}"
+                            Visibility="{Binding ButtonText, Converter={StaticResource NotNullToVisibilityConverter}}"
+                            Style="{StaticResource TextBlockButtonStyle}"
+                            RequestedTheme="Dark"
+                            Foreground="#6D8AFF"
+                            Margin="0,0,6,0"
+                            Grid.Column="1"
+                            FontWeight="Bold"
+                            Click="ButtonAction_Click"/>
                     </Grid>
                 </DataTemplate>
-            </ContentPresenter.ContentTemplate>
-        </ContentPresenter>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
 </UserControl>
