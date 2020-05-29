@@ -18,6 +18,8 @@ namespace InterfacesiOS.App
             ViewModelToViewConverter.AddMapping(viewModelType, viewControllerType);
         }
 
+        public RootViewController RootViewController { get; private set; }
+
         private BaseViewModel _rootViewModel;
         public BaseViewModel RootViewModel
         {
@@ -31,7 +33,14 @@ namespace InterfacesiOS.App
 
                 _rootViewModel = value;
 
-                NativeiOSApplication.Current.Window.RootViewController = value != null ? ViewModelToViewConverter.Convert(value) : null;
+                if (RootViewController == null)
+                {
+                    RootViewController = new RootViewController();
+                    NativeiOSApplication.Current.Window.RootViewController = RootViewController;
+                }
+
+                RootViewController.ViewController = value != null ? ViewModelToViewConverter.Convert(value) : null;
+                //NativeiOSApplication.Current.Window.RootViewController = value != null ? ViewModelToViewConverter.Convert(value) : null;
             }
         }
     }
