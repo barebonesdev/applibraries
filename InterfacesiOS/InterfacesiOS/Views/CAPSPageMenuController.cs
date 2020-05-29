@@ -29,6 +29,7 @@ using UIKit;
 using CoreGraphics;
 using System.Threading;
 using ToolsPortable;
+using System.Threading.Tasks;
 
 namespace InterfacesiOS.Views
 {
@@ -68,7 +69,7 @@ namespace InterfacesiOS.Views
 
         private UITapGestureRecognizer _gestureRecognizer;
 
-        public CAPSPageMenuController(UIViewController[] viewControllers, CAPSPageMenuConfiguration configuration = null)
+        public CAPSPageMenuController(UIViewController[] viewControllers, CAPSPageMenuConfiguration configuration = null, int initialPageIndex = 0)
         {
             _configuration = configuration ?? new CAPSPageMenuConfiguration();
 
@@ -78,6 +79,11 @@ namespace InterfacesiOS.Views
             if (_menuScrollView.Subviews.Length == 0)
             {
                 ConfigureUserInterface();
+            }
+
+            if (initialPageIndex > 0)
+            {
+                _ = MoveToPageAsync(initialPageIndex);
             }
         }
 
@@ -616,60 +622,7 @@ namespace InterfacesiOS.Views
                     }
                 }
 
-                if (itemIndex >= 0 && itemIndex < _controllers.Count)
-                {
-                    // Update page if changed
-                    if (itemIndex != CurrentPageIndex)
-                    {
-                        _startingPageForScroll = itemIndex;
-                        _lastPageIndex = CurrentPageIndex;
-                        CurrentPageIndex = itemIndex;
-                        _didTapMenuItemToScroll = true;
-
-                        // Add pages in between current and tapped page if necessary
-                        int smallerIndex = _lastPageIndex < CurrentPageIndex ? _lastPageIndex : CurrentPageIndex;
-                        int largerIndex = _lastPageIndex > CurrentPageIndex ? _lastPageIndex : CurrentPageIndex;
-
-                        if (smallerIndex + 1 != largerIndex)
-                        {
-                            for (int index = smallerIndex + 1; index <= largerIndex - 1; index++)
-                            {
-                                if (!_pagesAddedDictionary.Contains(index))
-                                {
-                                    AddPageAtIndex(index);
-                                    _pagesAddedDictionary.Add(index);
-                                }
-                            }
-                        }
-
-                        AddPageAtIndex(itemIndex);
-
-                        // Add page from which tap is initiated so it can be removed after tap is done
-                        _pagesAddedDictionary.Add(_lastPageIndex);
-                    }
-
-                    // Move controller scroll view when tapping menu item
-                    double duration = _configuration.ScrollAnimationDurationOnMenuItemTap / 1000.0;
-
-                    UIView.Animate(duration, delegate
-                    {
-                        nfloat xOffset = itemIndex * this.View.Frame.Width;
-                        _controllerScrollView.SetContentOffset(new CGPoint(
-                            x: xOffset,
-                            y: 0), animated: false);
-                    });
-
-                    if (_tapTimerCancellationSource != null)
-                    {
-                        _tapTimerCancellationSource.Cancel();
-                    }
-
-                    _tapTimerCancellationSource = new CancellationTokenSource();
-
-                    await System.Threading.Tasks.Task.Delay(_configuration.ScrollAnimationDurationOnMenuItemTap);
-
-                    ScrollViewDidEndTapScrollingAnimation();
-                }
+                await MoveToPageAsync(itemIndex);
             }
         }
 
@@ -892,7 +845,7 @@ namespace InterfacesiOS.Views
             base.ViewDidLayoutSubviews();
         }
 
-        private void MoveToPage(int index)
+        private async Task MoveToPageAsync(int index)
         {
             if (index >= 0 && index < _controllers.Count)
             {
@@ -936,6 +889,17 @@ namespace InterfacesiOS.Views
                         x: xOffset,
                         y: 0), animated: false);
                 });
+
+                if (_tapTimerCancellationSource != null)
+                {
+                    _tapTimerCancellationSource.Cancel();
+                }
+
+                _tapTimerCancellationSource = new CancellationTokenSource();
+
+                await System.Threading.Tasks.Task.Delay(_configuration.ScrollAnimationDurationOnMenuItemTap);
+
+                ScrollViewDidEndTapScrollingAnimation();
             }
         }
 

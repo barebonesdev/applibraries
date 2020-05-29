@@ -105,6 +105,7 @@ namespace InterfacesiOS.Views
                 {
                     try
                     {
+                        SnackbarManager.Close(snackbar); // Make sure to remove it
                         snackbar.ButtonCallback();
                     }
                     catch { }

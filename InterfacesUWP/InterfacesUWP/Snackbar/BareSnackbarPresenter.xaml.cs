@@ -32,13 +32,14 @@ namespace InterfacesUWP.Snackbar
         private void ButtonAction_Click(object sender, RoutedEventArgs e)
         {
             BareSnackbar snackbar = (sender as FrameworkElement).DataContext as BareSnackbar;
+            Manager.Close(snackbar);
             snackbar.ButtonCallback();
         }
 
         private void Snackbar_Tapped(object sender, TappedRoutedEventArgs e)
         {
             BareSnackbar snackbar = (sender as FrameworkElement).DataContext as BareSnackbar;
-            snackbar.Close();
+            Manager.Close(snackbar);
         }
     }
 }
