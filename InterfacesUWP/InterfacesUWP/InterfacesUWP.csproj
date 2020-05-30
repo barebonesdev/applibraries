@@ -207,6 +207,9 @@
     <Compile Include="RenderTargetBitmapHelper.cs" />
     <Compile Include="ShowHideContentControl.cs" />
     <Compile Include="SlideView.cs" />
+    <Compile Include="Snackbar\BareSnackbarPresenter.xaml.cs">
+      <DependentUpon>BareSnackbarPresenter.xaml</DependentUpon>
+    </Compile>
     <Compile Include="SquareContentControl.cs" />
     <Compile Include="SystemNavigationManagerEnhanced.cs" />
     <Compile Include="TestingStackPanel.cs" />
@@ -261,6 +264,10 @@
     <Page Include="PivotFolder\PivotItem.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Snackbar\BareSnackbarPresenter.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Themes\Generic.xaml">
       <Generator>MSBuild:Compile</Generator>

@@ -11,24 +11,31 @@ using Windows.UI.Core;
 using ToolsPortable;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml;
+using InterfacesUWP.Snackbar;
+using BareMvvm.Core.Snackbar;
 
 namespace InterfacesUWP.AppWindows
 {
     public class NativeUwpAppWindow : Grid, INativeAppWindow
     {
         private GenericViewModelPresenter _presenter;
+        private BareSnackbarPresenter _snackbarPresenter = new BareSnackbarPresenter();
         private SystemNavigationManagerEnhanced _navigationManager;
 
         public Window Window { get; private set; }
+
+        public BareSnackbarManager SnackbarManager => _snackbarPresenter.Manager;
 
         public NativeUwpAppWindow()
         {
             _presenter = new GenericViewModelPresenter();
             Children.Add(_presenter);
 
+            Children.Add(_snackbarPresenter);
+
             Window = Window.Current;
 
-            Window.Content = _presenter;
+            Window.Content = this;
 
             // Back button
             _navigationManager = SystemNavigationManagerEnhanced.GetForCurrentView();

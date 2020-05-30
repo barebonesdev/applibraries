@@ -8,6 +8,8 @@ using UIKit;
 using BareMvvm.Core.Windows;
 using System.ComponentModel;
 using InterfacesiOS.App;
+using BareMvvm.Core.Snackbar;
+using InterfacesiOS.Views;
 
 namespace InterfacesiOS.Windows
 {
@@ -16,6 +18,8 @@ namespace InterfacesiOS.Windows
         public event EventHandler<CancelEventArgs> BackPressed;
 
         public UIWindow NativeWindow { get; private set; }
+
+        public BareSnackbarManager SnackbarManager => NativeiOSApplication.Current.ViewManager.RootViewController.SnackbarPresenter.SnackbarManager;
 
         public NativeiOSAppWindow(UIWindow nativeWindow)
         {

@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="App\IOSDispatcher.cs" />
     <Compile Include="App\NativeiOSApplication.cs" />
+    <Compile Include="App\RootViewController.cs" />
     <Compile Include="App\ViewManager.cs" />
     <Compile Include="Binding\BindingHost.cs" />
     <Compile Include="Binding\LabelBinding.cs" />
@@ -58,6 +59,7 @@
     <Compile Include="ViewModelPresenters\PagedViewModelPresenter.cs" />
     <Compile Include="ViewModelPresenters\PagedViewModelWithPopupsPresenter.cs" />
     <Compile Include="ViewModelPresenters\ViewModelToViewConverter.cs" />
+    <Compile Include="Views\BareSnackbarPresenter.cs" />
     <Compile Include="Views\BareUIBlurView.cs" />
     <Compile Include="Views\BareUICustomColorPicker.cs" />
     <Compile Include="Views\BareUICustomPickerViewModel.cs" />

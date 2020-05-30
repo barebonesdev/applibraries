@@ -105,6 +105,7 @@
     <Compile Include="Helpers\TextViewHelper.cs" />
     <Compile Include="Views\CustomColorPickerView.cs" />
     <Compile Include="Views\GridViewLayout.cs" />
+    <Compile Include="Views\IGetSnackbarAnchorView.cs" />
     <Compile Include="Views\InlineDatePicker.cs" />
     <Compile Include="Views\MyZoomAndPanView.cs" />
     <Compile Include="Views\ViewGroupExtensionMethods.cs" />
