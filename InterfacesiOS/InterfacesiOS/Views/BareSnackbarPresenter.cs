@@ -101,7 +101,7 @@ namespace InterfacesiOS.Views
                 button.SetTitleColor(ButtonTextColor, UIControlState.Normal);
                 snackbarContainer.AddSubview(button);
                 button.StretchHeight(snackbarContainer, top: 12, bottom: 12);
-                button.TouchUpInside += new WeakEventHandler(delegate
+                button.TouchUpInside += delegate
                 {
                     try
                     {
@@ -109,7 +109,7 @@ namespace InterfacesiOS.Views
                         snackbar.ButtonCallback();
                     }
                     catch { }
-                }).Handler;
+                };
 
                 snackbarContainer.AddConstraints(NSLayoutConstraint.FromVisualFormat("H:|-12-[message]->=12-[button]-12-|", NSLayoutFormatOptions.SpacingEdgeToEdge, null, new NSDictionary(
                     "message", label,
