@@ -52,7 +52,7 @@ namespace InterfacesDroid.App
             // This is to resolve crash at CultureInfo.CurrentCulture
             // when language is set to Thai. See
             // https://github.com/xamarin/Xamarin.Forms/issues/4037
-            if (Environment.CurrentDirectory == "_never_POSSIBLE_")
+            if (System.Environment.CurrentDirectory == "_never_POSSIBLE_")
             {
                 new System.Globalization.ChineseLunisolarCalendar();
                 new System.Globalization.HebrewCalendar();
