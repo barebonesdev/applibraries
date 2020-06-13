@@ -275,11 +275,50 @@ namespace InterfacesiOS.Views
             // Remove the existing constraint that gets changed
             if (above != null)
             {
-                View.RemoveConstraint(View.Constraints.First(i => i.FirstItem == above && i.FirstAttribute == NSLayoutAttribute.Bottom));
+                // Why should these be FirstOrDefault though? Doesn't that mean I have a logical error if this ever returns null?
+                // When there's exactly 1 view, it should have a constraint for the Top, and it should have a constraint for the Bottom
+                // For two views...
+                // - View 0 - Top = Top of Parent
+                // - View 1 - Top = Bottom of View 1, Bottom = Bottom of Parent
+                // So if I was inserting at index 1, the above view is View 0, which does NOT have any bottom constraint
+
+                NSLayoutConstraint existing;
+
+                if (below == null)
+                {
+                    // For when the "above" view is at the bottom, that view will have a constraint that the bottom should be pinned to bottom of parent view... we need to remove that constraint
+                    existing = View.Constraints.FirstOrDefault(i => i.FirstItem == above && i.FirstAttribute == NSLayoutAttribute.Bottom && i.SecondItem == View && i.SecondAttribute == NSLayoutAttribute.Bottom);
+                    if (existing == null)
+                    {
+                        throw new InvalidOperationException("The very bottom constraint was missing, logical error somewhere.");
+                    }
+                }
+
+                else
+                {
+                    // Otherwise, above view wasn't at the bottom, so it has a constraint (added by the item below it) that the item below's top should be pinned to the bottom of the "above" view
+                    // This is also removing the below item's constraint in one, so no need to do anything to below
+                    existing = View.Constraints.FirstOrDefault(i => i.FirstItem == below && i.FirstAttribute == NSLayoutAttribute.Top && i.SecondItem == above && i.SecondAttribute == NSLayoutAttribute.Bottom);
+                    if (existing == null)
+                    {
+                        throw new InvalidOperationException("Constraint between item was missing, logical error somewhere.");
+                    }
+                }
+
+                View.RemoveConstraint(existing);
             }
             else if (below != null)
             {
-                View.RemoveConstraint(View.Constraints.First(i => i.FirstItem == below && i.FirstAttribute == NSLayoutAttribute.Top));
+                // If above was null (since we're inserting into the top), we need to remove the below constraint which is pinned to the top of the parent view
+                var existing = View.Constraints.FirstOrDefault(i => i.FirstItem == below && i.FirstAttribute == NSLayoutAttribute.Top && i.SecondItem == View && i.SecondAttribute == NSLayoutAttribute.Top);
+                if (existing != null)
+                {
+                    View.RemoveConstraint(existing);
+                }
+                else
+                {
+                    throw new InvalidOperationException("The very top constraint was missing, logical error somewhere.");
+                }
             }
 
             if (above == null)
