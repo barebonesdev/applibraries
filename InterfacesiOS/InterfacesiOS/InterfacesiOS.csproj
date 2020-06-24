@@ -54,6 +54,7 @@
     <Compile Include="Converters\TextToDoubleConverter.cs" />
     <Compile Include="Extensions\IOSMessageDialog.cs" />
     <Compile Include="Helpers\SdkSupportHelper.cs" />
+    <Compile Include="Helpers\UIColorCompat.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ViewModelPresenters\ListOfViewModelsPresenter.cs" />
     <Compile Include="ViewModelPresenters\PagedViewModelPresenter.cs" />

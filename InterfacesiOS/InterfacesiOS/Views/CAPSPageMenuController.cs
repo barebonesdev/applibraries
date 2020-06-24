@@ -30,6 +30,7 @@ using CoreGraphics;
 using System.Threading;
 using ToolsPortable;
 using System.Threading.Tasks;
+using InterfacesiOS.Helpers;
 
 namespace InterfacesiOS.Views
 {
@@ -949,10 +950,10 @@ namespace InterfacesiOS.Views
 
         public UIColor SelectionIndicatorColor { get; set; } = UIColor.Blue;
         public UIColor SelectedMenuItemLabelColor { get; set; } = UIColor.Blue;
-        public UIColor UnselectedMenuItemLabelColor { get; set; } = UIColor.LightGray;
-        public UIColor ScrollMenuBackgroundColor { get; set; } = new UIColor(0.97f, 1);
-        public UIColor ViewBackgroundColor { get; set; } = UIColor.White;
-        public UIColor BottomMenuHairlineColor { get; set; } = UIColor.LightGray;
+        public UIColor UnselectedMenuItemLabelColor { get; set; } = UIColorCompat.SecondaryLabelColor;
+        public UIColor ScrollMenuBackgroundColor { get; set; } = UIColorCompat.SecondarySystemBackgroundColor;
+        public UIColor ViewBackgroundColor { get; set; } = UIColorCompat.SystemBackgroundColor;
+        public UIColor BottomMenuHairlineColor { get; set; } = UIColorCompat.OpaqueSeparatorColor;
         public UIColor MenuItemSeparatorColor { get; set; } = UIColor.Clear;
 
         public UIFont MenuItemFont { get; set; } = UIFont.SystemFontOfSize(15);

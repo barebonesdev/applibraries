@@ -11,6 +11,7 @@ using System.ComponentModel;
 using ToolsPortable;
 using InterfacesiOS.Binding;
 using InterfacesiOS.Views;
+using InterfacesiOS.Helpers;
 
 namespace InterfacesiOS.Controllers
 {
@@ -58,7 +59,7 @@ namespace InterfacesiOS.Controllers
     {
         public BareMvvmUIViewController()
         {
-            base.View.BackgroundColor = new UIColor(1, 1);
+            base.View.BackgroundColor = UIColorCompat.SystemBackgroundColor;
 
             _shouldReturnCondition = new UITextFieldCondition(ShouldReturn);
 
