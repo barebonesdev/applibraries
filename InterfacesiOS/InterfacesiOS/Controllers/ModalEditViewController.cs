@@ -123,7 +123,7 @@ namespace InterfacesiOS.Controllers
             _doneButton.Font = _doneButton.Font.Bold();
             _doneButton.TouchUpInside += new WeakEventHandler(DoneButtonTapped).Handler;
 
-            ContentView.BackgroundColor = UIColor.SystemBackgroundColor;
+            ContentView.BackgroundColor = UIColorCompat.SystemBackgroundColor;
             _dialogView.AddSubview(ContentView);
 
             _dialogView.BackgroundColor = HeaderBackgroundColor;
