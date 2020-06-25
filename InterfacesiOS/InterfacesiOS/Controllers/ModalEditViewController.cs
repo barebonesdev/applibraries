@@ -25,6 +25,7 @@ using CoreGraphics;
 using InterfacesiOS.Views;
 using Foundation;
 using ToolsPortable;
+using InterfacesiOS.Helpers;
 
 namespace InterfacesiOS.Controllers
 {
@@ -54,8 +55,8 @@ namespace InterfacesiOS.Controllers
 
         public ModalEditViewController(UIView contentView, string headerText, UIViewController parent)
         {
-            HeaderBackgroundColor = UIColor.White;
-            HeaderTextColor = UIColor.Black;
+            HeaderBackgroundColor = UIColorCompat.SystemBackgroundColor;
+            HeaderTextColor = UIColorCompat.LabelColor;
             HeaderText = headerText;
             _parent = parent;
             ContentView = contentView;
@@ -122,7 +123,7 @@ namespace InterfacesiOS.Controllers
             _doneButton.Font = _doneButton.Font.Bold();
             _doneButton.TouchUpInside += new WeakEventHandler(DoneButtonTapped).Handler;
 
-            ContentView.BackgroundColor = UIColor.White;
+            ContentView.BackgroundColor = UIColorCompat.SystemBackgroundColor;
             _dialogView.AddSubview(ContentView);
 
             _dialogView.BackgroundColor = HeaderBackgroundColor;

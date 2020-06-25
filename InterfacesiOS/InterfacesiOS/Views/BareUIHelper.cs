@@ -6,6 +6,7 @@ using System.Text;
 using Foundation;
 using UIKit;
 using CoreGraphics;
+using InterfacesiOS.Helpers;
 
 namespace InterfacesiOS.Views
 {
@@ -381,8 +382,8 @@ namespace InterfacesiOS.Views
             }
         }
 
-        public static readonly UIColor InputDividerColor = new UIColor(225 / 255f, 224 / 255f, 229 / 255f, 1);
-        public static readonly UIColor InputSectionDividerColor = new UIColor(240 / 255f, 239 / 255f, 244 / 255f, 1);
+        public static readonly UIColor InputDividerColor = UIColorCompat.SeparatorColor;
+        public static readonly UIColor InputSectionDividerColor = UIColorCompat.SystemGroupedBackgroundColor;
 
         public static void AddDivider(this UIStackView stackView, bool fullWidth = false)
         {

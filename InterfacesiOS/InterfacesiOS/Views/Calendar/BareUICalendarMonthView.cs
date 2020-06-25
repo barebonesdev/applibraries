@@ -9,6 +9,7 @@ using System.Collections;
 using ToolsPortable;
 using CoreGraphics;
 using CoreAnimation;
+using InterfacesiOS.Helpers;
 
 namespace InterfacesiOS.Views.Calendar
 {
@@ -505,7 +506,7 @@ namespace InterfacesiOS.Views.Calendar
             {
                 _separator = new UIView()
                 {
-                    BackgroundColor = UIColor.LightGray
+                    BackgroundColor = UIColorCompat.SystemGray2Color
                 };
                 this.Add(_separator);
 
@@ -718,7 +719,7 @@ namespace InterfacesiOS.Views.Calendar
 
             if (dayType == BareUICalendarMonthView.DayType.NextMonth || dayType == BareUICalendarMonthView.DayType.PrevMonth)
             {
-                _labelDay.TextColor = UIColor.LightGray;
+                _labelDay.TextColor = UIColorCompat.SystemGray2Color;
             }
             else if (date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
             {
@@ -726,7 +727,7 @@ namespace InterfacesiOS.Views.Calendar
             }
             else
             {
-                _labelDay.TextColor = UIColor.Black;
+                _labelDay.TextColor = UIColorCompat.LabelColor;
             }
 
             if (isSelected)
