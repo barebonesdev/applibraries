@@ -126,7 +126,7 @@ namespace InterfacesDroid.Adapters
                 case NotifyCollectionChangedAction.Move:
                     for (int i = 0; i < e.NewItems.Count; i++)
                     {
-                        NotifyItemMoved(e.OldStartingIndex + i, e.NewStartingIndex + 1);
+                        NotifyItemMoved(e.OldStartingIndex + i, e.NewStartingIndex + i);
                     }
                     break;
 
