@@ -118,6 +118,12 @@
     <Compile Include="ColorPicker.xaml.cs">
       <DependentUpon>ColorPicker.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\BarePasswordBox.xaml.cs">
+      <DependentUpon>BarePasswordBox.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\BareTextBox.xaml.cs">
+      <DependentUpon>BareTextBox.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\ComboBoxWithActions.xaml.cs">
       <DependentUpon>ComboBoxWithActions.xaml</DependentUpon>
     </Compile>
@@ -244,6 +250,14 @@
     <Page Include="ColorPicker.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Controls\BarePasswordBox.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\BareTextBox.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Controls\ComboBoxWithActions.xaml">
       <SubType>Designer</SubType>
