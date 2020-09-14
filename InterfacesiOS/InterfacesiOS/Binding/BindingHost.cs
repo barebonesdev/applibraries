@@ -11,6 +11,7 @@ using InterfacesiOS.Views;
 using CoreAnimation;
 using System.Collections;
 using CoreGraphics;
+using BareMvvm.Core;
 
 namespace InterfacesiOS.Binding
 {
@@ -121,6 +122,19 @@ namespace InterfacesiOS.Binding
                 }
 
                 textField.Text = text;
+            });
+        }
+
+        /// <summary>
+        /// Binds two-way to a <see cref="TextField"/> value.
+        /// </summary>
+        /// <param name="textField"></param>
+        /// <param name="propertyName"></param>
+        public void SetTextFieldBinding(BareUITextField textField, string propertyName)
+        {
+            SetBinding(propertyName, (TextField sourceTextField) =>
+            {
+                textField.TextField = sourceTextField;
             });
         }
 

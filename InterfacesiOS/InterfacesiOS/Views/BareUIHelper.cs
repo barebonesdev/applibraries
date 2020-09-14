@@ -7,6 +7,8 @@ using Foundation;
 using UIKit;
 using CoreGraphics;
 using InterfacesiOS.Helpers;
+using Intents;
+using System.ComponentModel;
 
 namespace InterfacesiOS.Views
 {
@@ -103,6 +105,12 @@ namespace InterfacesiOS.Views
                 parentView.RemoveConstraint(existing);
             }
 
+            return view;
+        }
+
+        public static UIView RemoveAllConstraints(this UIView view)
+        {
+            view.RemoveConstraints(view.Constraints);
             return view;
         }
 

@@ -81,6 +81,7 @@
     <Compile Include="Views\BareUISwitch.cs" />
     <Compile Include="Views\BareUITableViewCell.cs" />
     <Compile Include="Views\BareUITableViewSource.cs" />
+    <Compile Include="Views\BareUITextField.cs" />
     <Compile Include="Views\BareUITextView.cs" />
     <Compile Include="Views\BareUIView.cs" />
     <Compile Include="Views\BareUIVisibilityContainer.cs" />
