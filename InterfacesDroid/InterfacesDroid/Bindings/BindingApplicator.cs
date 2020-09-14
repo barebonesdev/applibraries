@@ -38,6 +38,7 @@ using Android.Content.Res;
 using Android.Views;
 using Android.Widget;
 using AndroidX.Core.View;
+using Google.Android.Material.TextField;
 using InterfacesDroid.Helpers;
 using System;
 using System.Collections.Generic;
@@ -187,6 +188,17 @@ namespace BareMvvm.Core.Bindings
 
                 string sourceSegment = sourcePath[i];
                 var sourceProperty = currentContext.GetType().GetProperty(sourceSegment);
+                if (sourceProperty == null)
+                {
+#if DEBUG
+                    if (Debugger.IsAttached)
+                    {
+                        Debugger.Break();
+                    }
+
+                    throw new Exception($"Couldn't find property {sourceSegment} on type {currentContext.GetType().Name}.");
+#endif
+                }
 
                 if (i == lastIndex) /* The value. */
                 {
@@ -587,6 +599,10 @@ namespace BareMvvm.Core.Bindings
                         // This theoretically shouldn't ever fail, yet it seems to fail sometimes due to a null reference exception
                         // which makes no sense. So I'll just catch it.
                     }
+                }
+                else if (targetProperty.Name == nameof(View.HasFocus))
+                {
+                    // Don't do anything, these are only one-way where the viewmodel updates but the view never updates
                 }
                 else
                 {

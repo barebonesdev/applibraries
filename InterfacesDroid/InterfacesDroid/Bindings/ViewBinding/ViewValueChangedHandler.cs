@@ -91,6 +91,9 @@ namespace BareMvvm.Core.Bindings
                     propertyBinding.ConverterParameter);
             }
             catch
+#if DEBUG
+            (Exception ex)
+#endif
             {
                 /* TODO: log exception */
                 if (Debugger.IsAttached)
@@ -144,7 +147,21 @@ namespace BareMvvm.Core.Bindings
                 }
             }
 
-            sourceProperty.SetValue(dataContext, newValue);
+            try
+            {
+                sourceProperty.SetValue(dataContext, newValue);
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                if (Debugger.IsAttached)
+                {
+                    Debugger.Break();
+                }
+#endif
+
+                throw ex;
+            }
         }
     }
 }

@@ -137,10 +137,10 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="Resources\AboutResources.txt" />
-    <AndroidResource Include="Resources\layout\CustomColorPickerView.axml">
+    <AndroidResource Include="Resources\layout\CustomColorPickerView.xml">
       <SubType>Designer</SubType>
     </AndroidResource>
-    <AndroidResource Include="Resources\layout\CustomColorPickerChannelView.axml">
+    <AndroidResource Include="Resources\layout\CustomColorPickerChannelView.xml">
       <SubType>Designer</SubType>
     </AndroidResource>
   </ItemGroup>

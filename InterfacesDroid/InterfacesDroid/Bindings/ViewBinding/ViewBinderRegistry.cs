@@ -133,6 +133,8 @@ namespace BareMvvm.Core.Bindings
 					(view, h) => view.DateChanged += h, (view, h) => view.DateChanged -= h, (view, args) => args) },
 				{MakeDictionaryKey(typeof(MaterialCheckBox), nameof(MaterialCheckBox.Checked)), new ViewEventBinder<MaterialCheckBox, CompoundButton.CheckedChangeEventArgs, bool>(
 					(view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked) },
+				{MakeDictionaryKey(typeof(TextInputEditText), nameof(TextInputEditText.HasFocus)), new ViewEventBinder<TextInputEditText, Android.Views.View.FocusChangeEventArgs, bool>(
+					(view, h) => view.FocusChange += h, (view, h) => view.FocusChange -= h, (view, args) => args.HasFocus) }
 #endif
 			};
 	}
