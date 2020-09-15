@@ -15,80 +15,9 @@ using BareMvvm.Core;
 
 namespace InterfacesiOS.Binding
 {
-    public class BindingHost
+    public class BindingHost : BareMvvm.Core.Binding.BindingHost
     {
-        private PropertyChangedEventHandler _bindingObjectPropertyChangedHandler;
-        private object _bindingObject;
-        /// <summary>
-        /// The DataContext for binding
-        /// </summary>
-        public object BindingObject
-        {
-            get { return _bindingObject; }
-            set
-            {
-                if (value == _bindingObject)
-                {
-                    return;
-                }
-
-                // Unregister old
-                if (_bindingObject is INotifyPropertyChanged && _bindingObjectPropertyChangedHandler != null)
-                {
-                    (_bindingObject as INotifyPropertyChanged).PropertyChanged -= _bindingObjectPropertyChangedHandler;
-                }
-
-                _bindingObject = value;
-
-                // Register new
-                if (value is INotifyPropertyChanged)
-                {
-                    if (_bindingObjectPropertyChangedHandler == null)
-                    {
-                        _bindingObjectPropertyChangedHandler = new WeakEventHandler<PropertyChangedEventArgs>(BindingObject_PropertyChanged).Handler;
-                    }
-                    (value as INotifyPropertyChanged).PropertyChanged += _bindingObjectPropertyChangedHandler;
-                }
-
-                if (value != null)
-                {
-                    UpdateAllBindings();
-                }
-            }
-        }
-
-        private void BindingObject_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-#if DEBUG
-            try
-            {
-#endif
-                // Be sure to call ToArray(), since a binding change could cause a new binding to
-                // be added while we're enumerating, which would throw an exception
-                foreach (var b in _bindings.Where(i => i.Item1 == e.PropertyName).ToArray())
-                {
-                    b.Item2.Invoke();
-                }
-#if DEBUG
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debugger.Break();
-                throw ex;
-            }
-#endif
-        }
-
-        private void UpdateAllBindings()
-        {
-            foreach (var b in _bindings.ToArray())
-            {
-                b.Item2.Invoke();
-            }
-        }
-
-        private List<Tuple<string, Action>> _bindings = new List<Tuple<string, Action>>();
-        public void SetTextFieldTextBinding(UITextField textField, string propertyName, Func<object, string> converter = null, Func<string, object> backConverter = null)
+        public void SetTextFieldTextBinding(UITextField textField, string propertyPath, Func<object, string> converter = null, Func<string, object> backConverter = null)
         {
             textField.AddTarget(new WeakEventHandler<EventArgs>(delegate
             {
@@ -103,13 +32,12 @@ namespace InterfacesiOS.Binding
                     value = textField.Text;
                 }
 
-                BindingObject.GetType().GetProperty(propertyName).SetValue(BindingObject, value);
+                SetValue(propertyPath, value);
 
             }).Handler, UIControlEvent.EditingChanged);
 
-            SetBinding(propertyName, delegate
+            SetBinding(propertyPath, sourceValue =>
             {
-                object sourceValue = BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject);
                 string text;
 
                 if (converter != null)
@@ -129,18 +57,18 @@ namespace InterfacesiOS.Binding
         /// Binds two-way to a <see cref="TextField"/> value.
         /// </summary>
         /// <param name="textField"></param>
-        /// <param name="propertyName"></param>
-        public void SetTextFieldBinding(BareUITextField textField, string propertyName)
+        /// <param name="propertyPath"></param>
+        public void SetTextFieldBinding(BareUITextField textField, string propertyPath)
         {
-            SetBinding(propertyName, (TextField sourceTextField) =>
+            SetBinding(propertyPath, (TextField sourceTextField) =>
             {
                 textField.TextField = sourceTextField;
             });
         }
 
-        public void SetTextFieldTextBinding<T>(UITextField textField, string propertyName, Func<T, string> converter, Func<string, T> backConverter)
+        public void SetTextFieldTextBinding<T>(UITextField textField, string propertyPath, Func<T, string> converter, Func<string, T> backConverter)
         {
-            SetTextFieldTextBinding(textField, propertyName, converter: (o) =>
+            SetTextFieldTextBinding(textField, propertyPath, converter: (o) =>
             {
                 if (o is T)
                 {
@@ -153,105 +81,107 @@ namespace InterfacesiOS.Binding
             });
         }
 
-        public void SetTextViewTextBinding(UITextView textView, string propertyName)
+        public void SetTextViewTextBinding(UITextView textView, string propertyPath)
         {
             textView.Changed += new WeakEventHandler(delegate
             {
-                BindingObject.GetType().GetProperty(propertyName).SetValue(BindingObject, textView.Text);
+                SetValue(propertyPath, textView.Text);
             }).Handler;
 
-            SetBinding(propertyName, delegate
+            SetBinding<string>(propertyPath, txt =>
             {
-                textView.Text = BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject) as string;
+                textView.Text = txt;
             });
         }
 
-        public void SetSliderBinding(UISlider slider, string propertyName, bool twoWay = false)
+        public void SetSliderBinding(UISlider slider, string propertyPath, bool twoWay = false)
         {
             if (twoWay)
             {
                 slider.ValueChanged += delegate
                 {
-                    BindingObject.GetType().GetProperty(propertyName).SetValue(BindingObject, slider.Value);
+                    SetValue(propertyPath, slider.Value);
                 };
             }
 
-            SetBinding(propertyName, delegate
+            SetBinding(propertyPath, value =>
             {
-                float val = float.Parse(BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject).ToString());
+                float val = float.Parse(value.ToString());
                 slider.Value = val;
             });
         }
 
-        public void SetDateBinding(BareUIInlineDatePicker datePicker, string propertyName)
+        public void SetDateBinding(BareUIInlineDatePicker datePicker, string propertyPath)
         {
             datePicker.DateChanged += new WeakEventHandler<DateTime?>((sender, date) =>
             {
-                var prop = BindingObject.GetType().GetProperty(propertyName);
+                var objAndProp = GetProperty(propertyPath);
+                if (objAndProp != null)
+                {
+                    var prop = objAndProp.Item2;
 
-                if (prop.PropertyType == typeof(DateTime?))
-                {
-                    prop.SetValue(BindingObject, date);
-                }
-                else
-                {
-                    prop.SetValue(BindingObject, date.GetValueOrDefault());
+                    if (prop.PropertyType == typeof(DateTime?))
+                    {
+                        prop.SetValue(DataContext, date);
+                    }
+                    else
+                    {
+                        prop.SetValue(DataContext, date.GetValueOrDefault());
+                    }
                 }
             }).Handler;
 
-            SetBinding(propertyName, delegate
+            SetBinding(propertyPath, value =>
             {
-                object value = BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject);
                 datePicker.GetType().GetProperty(nameof(datePicker.Date)).SetValue(datePicker, value);
             });
         }
 
-        public void SetTimeBinding(UIDatePicker datePicker, string propertyName)
+        public void SetTimeBinding(UIDatePicker datePicker, string propertyPath)
         {
             datePicker.ValueChanged += delegate
             {
-                var prop = BindingObject.GetType().GetProperty(propertyName);
-                prop.SetValue(BindingObject, BareUIHelper.NSDateToDateTime(datePicker.Date).TimeOfDay);
+                SetValue(propertyPath, BareUIHelper.NSDateToDateTime(datePicker.Date).TimeOfDay);
             };
 
-            SetBinding(propertyName, delegate
+            SetBinding<TimeSpan>(propertyPath, value =>
             {
-                TimeSpan value = (TimeSpan)BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject);
                 datePicker.Date = BareUIHelper.DateTimeToNSDate(DateTime.Today.Add(value));
             });
         }
 
-        public void SetTimeBinding(BareUIInlineTimePicker timePicker, string propertyName)
+        public void SetTimeBinding(BareUIInlineTimePicker timePicker, string propertyPath)
         {
             timePicker.TimeChanged += new WeakEventHandler<TimeSpan?>((sender, time) =>
             {
-                var prop = BindingObject.GetType().GetProperty(propertyName);
+                var objAndProp = GetProperty(propertyPath);
+                if (objAndProp != null)
+                {
+                    var prop = objAndProp.Item2;
 
-                if (prop.PropertyType == typeof(TimeSpan?))
-                {
-                    prop.SetValue(BindingObject, time);
-                }
-                else
-                {
-                    prop.SetValue(BindingObject, time.GetValueOrDefault());
+                    if (prop.PropertyType == typeof(TimeSpan?))
+                    {
+                        prop.SetValue(DataContext, time);
+                    }
+                    else
+                    {
+                        prop.SetValue(DataContext, time.GetValueOrDefault());
+                    }
                 }
             }).Handler;
 
-            SetBinding(propertyName, delegate
+            SetBinding(propertyPath, value =>
             {
-                object value = BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject);
                 timePicker.GetType().GetProperty(nameof(timePicker.Time)).SetValue(timePicker, value);
             });
         }
 
         private List<EventHandler<EventArgs>> _toggledViaHeaderHandlers = new List<EventHandler<EventArgs>>();
-        public void SetSwitchBinding(BareUISwitch switchView, string propertyName)
+        public void SetSwitchBinding(BareUISwitch switchView, string propertyPath)
         {
             var handler = new EventHandler<EventArgs>(delegate
             {
-                var prop = BindingObject.GetType().GetProperty(propertyName);
-
-                prop.SetValue(BindingObject, switchView.Switch.On);
+                SetValue(propertyPath, switchView.Switch.On);
             });
 
             // In order to avoid disposing, we need to store the handler.
@@ -261,43 +191,43 @@ namespace InterfacesiOS.Binding
 
             switchView.ToggledViaHeader += new WeakEventHandler(handler).Handler;
 
-            SetSwitchBinding(switchView.Switch, propertyName);
+            SetSwitchBinding(switchView.Switch, propertyPath);
         }
 
-        public void SetSwitchBinding(UISwitch switchView, string propertyName)
+        public void SetSwitchBinding(UISwitch switchView, string propertyPath)
         {
             switchView.ValueChanged += new WeakEventHandler(delegate
             {
-                var prop = BindingObject.GetType().GetProperty(propertyName);
-
-                prop.SetValue(BindingObject, switchView.On);
+                SetValue(propertyPath, switchView.On);
             }).Handler;
 
-            SetBinding(propertyName, delegate
+            SetBinding<bool>(propertyPath, value =>
             {
-                bool value = (bool)BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject);
                 switchView.On = value;
             });
         }
 
-        public void SetSelectedColorBinding(BareUIInlineColorPickerView pickerView, string propertyName)
+        public void SetSelectedColorBinding(BareUIInlineColorPickerView pickerView, string propertyPath)
         {
             pickerView.SelectionChanged += new WeakEventHandler<CGColor>((sender, color) =>
             {
-                var property = BindingObject.GetType().GetProperty(propertyName);
-                if (property.PropertyType == typeof(byte[]))
+                var objAndProperty = GetProperty(propertyPath);
+                if (objAndProperty != null)
                 {
-                    property.SetValue(BindingObject, BareUIHelper.ToColorBytes(color));
-                }
-                else if (property.PropertyType == typeof(CGColor))
-                {
-                    property.SetValue(BindingObject, color);
+                    var property = objAndProperty.Item2;
+                    if (property.PropertyType == typeof(byte[]))
+                    {
+                        property.SetValue(DataContext, BareUIHelper.ToColorBytes(color));
+                    }
+                    else if (property.PropertyType == typeof(CGColor))
+                    {
+                        property.SetValue(DataContext, color);
+                    }
                 }
             }).Handler;
 
-            SetBinding(propertyName, delegate
+            SetBinding(propertyPath, value =>
             {
-                var value = BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject);
                 if (value is CGColor color)
                 {
                     pickerView.SelectedColor = color;
@@ -309,32 +239,31 @@ namespace InterfacesiOS.Binding
             });
         }
 
-        public void SetSelectedItemBinding(BareUIInlinePickerView pickerView, string propertyName)
+        public void SetSelectedItemBinding(BareUIInlinePickerView pickerView, string propertyPath)
         {
             pickerView.SelectionChanged += new WeakEventHandler<object>((sender, item) =>
             {
-                BindingObject.GetType().GetProperty(propertyName).SetValue(BindingObject, item);
+                SetValue(propertyPath, item);
             }).Handler;
 
-            SetBinding(propertyName, delegate
+            SetBinding(propertyPath, selectedItem =>
             {
-                pickerView.SelectedItem = BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject);
+                pickerView.SelectedItem = selectedItem;
             });
         }
 
-        public void SetItemsSourceBinding(BareUIInlinePickerView pickerView, string propertyName)
+        public void SetItemsSourceBinding(BareUIInlinePickerView pickerView, string propertyPath)
         {
-            SetBinding(propertyName, delegate
+            SetBinding<IEnumerable>(propertyPath, itemsSource =>
             {
-                pickerView.ItemsSource = BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject) as IEnumerable;
+                pickerView.ItemsSource = itemsSource;
             });
         }
 
-        public void SetVisibilityBinding(BareUIVisibilityContainer visibilityContainer, string propertyName, bool invert = false)
+        public void SetVisibilityBinding(BareUIVisibilityContainer visibilityContainer, string propertyPath, bool invert = false)
         {
-            SetBinding(propertyName, delegate
+            SetBinding(propertyPath, value =>
             {
-                var value = BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject);
                 bool boolean;
                 if (value is bool b)
                 {
@@ -358,11 +287,11 @@ namespace InterfacesiOS.Binding
             });
         }
 
-        public void SetTableViewSourceBinding(UITableView tableView, string propertyName, Func<UITableViewSource> createTableSourceAction)
+        public void SetTableViewSourceBinding(UITableView tableView, string propertyPath, Func<UITableViewSource> createTableSourceAction)
         {
-            SetBinding(propertyName, delegate
+            SetBinding(propertyPath, value =>
             {
-                if (BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject) == null)
+                if (DataContext.GetType().GetProperty(propertyPath).GetValue(DataContext) == null)
                 {
                     tableView.Source = null;
                 }
@@ -373,9 +302,9 @@ namespace InterfacesiOS.Binding
             });
         }
 
-        public void SetIsEnabledBinding(UIView view, string propertyName)
+        public void SetIsEnabledBinding(UIView view, string propertyPath)
         {
-            SetBinding<bool>(propertyName, (isEnabled) =>
+            SetBinding<bool>(propertyPath, (isEnabled) =>
             {
                 if (isEnabled)
                 {
@@ -390,12 +319,10 @@ namespace InterfacesiOS.Binding
             });
         }
 
-        public void SetLabelTextBinding(UILabel label, string propertyName, Func<object, string> converter = null)
+        public void SetLabelTextBinding(UILabel label, string propertyPath, Func<object, string> converter = null)
         {
-            SetBinding(propertyName, delegate
+            SetBinding(propertyPath, value =>
             {
-                var value = BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject);
-
                 string valueText;
                 if (converter != null)
                 {
@@ -422,9 +349,9 @@ namespace InterfacesiOS.Binding
             });
         }
 
-        public void SetLabelTextBinding<T>(UILabel label, string propertyName, Func<T, string> converter = null)
+        public void SetLabelTextBinding<T>(UILabel label, string propertyPath, Func<T, string> converter = null)
         {
-            SetLabelTextBinding(label, propertyName, (obj) =>
+            SetLabelTextBinding(label, propertyPath, obj =>
             {
                 return converter(obj is T ? (T)obj : default(T));
             });
@@ -434,21 +361,19 @@ namespace InterfacesiOS.Binding
         /// Only one-way binding
         /// </summary>
         /// <param name="cell"></param>
-        /// <param name="propertyName"></param>
-        public void SetIsCheckedBinding(UITableViewCell cell, string propertyName)
+        /// <param name="propertyPath"></param>
+        public void SetIsCheckedBinding(UITableViewCell cell, string propertyPath)
         {
-            SetBinding<bool>(propertyName, (isChecked) =>
+            SetBinding<bool>(propertyPath, isChecked =>
             {
                 cell.Accessory = isChecked ? UITableViewCellAccessory.Checkmark : UITableViewCellAccessory.None;
             });
         }
 
-        public void SetColorBinding(CAShapeLayer layer, string propertyName)
+        public void SetColorBinding(CAShapeLayer layer, string propertyPath)
         {
-            SetBinding(propertyName, delegate
+            SetBinding<byte[]>(propertyPath, colorArray =>
             {
-                byte[] colorArray = BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject) as byte[];
-
                 if (colorArray != null)
                 {
                     layer.FillColor = BareUIHelper.ToCGColor(colorArray);
@@ -460,12 +385,11 @@ namespace InterfacesiOS.Binding
             });
         }
 
-        public void SetBackgroundColorBinding(UIView view, string propertyName)
+        public void SetBackgroundColorBinding(UIView view, string propertyPath)
         {
-            SetBinding(propertyName, delegate
+            SetBinding(propertyPath, value =>
             {
                 UIColor colorValue = null;
-                var value = BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject);
 
                 if (value is byte[] colorArray)
                 {
@@ -484,46 +408,10 @@ namespace InterfacesiOS.Binding
             });
         }
 
-        public void SetBinding<T>(string propertyName, Action<T> action)
+        public void SetVisibilityBinding(UIView view, string propertyPath, bool invert = false)
         {
-            SetBinding(propertyName, delegate
+            SetBinding<bool>(propertyPath, isVisible =>
             {
-                object value = BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject);
-                if (value == null)
-                {
-                    action(default(T));
-                }
-                else
-                {
-                    action((T)value);
-                }
-            });
-        }
-
-        public void SetBinding(string propertyName, Action action)
-        {
-            SetBindings(new string[] { propertyName }, action);
-        }
-
-        public void SetBindings(string[] propertyNames, Action action)
-        {
-            foreach (var propName in propertyNames)
-            {
-                _bindings.Add(new Tuple<string, Action>(propName, action));
-            }
-
-            if (BindingObject != null)
-            {
-                action.Invoke();
-            }
-        }
-
-        public void SetVisibilityBinding(UIView view, string propertyName, bool invert = false)
-        {
-            SetBinding(propertyName, delegate
-            {
-                bool isVisible = (bool)BindingObject.GetType().GetProperty(propertyName).GetValue(BindingObject);
-
                 if (invert)
                 {
                     isVisible = !isVisible;

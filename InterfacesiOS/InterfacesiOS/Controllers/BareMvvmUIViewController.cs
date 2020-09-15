@@ -81,7 +81,7 @@ namespace InterfacesiOS.Controllers
                 }
 
                 _viewModel = value;
-                BindingHost.BindingObject = value;
+                BindingHost.DataContext = value;
                 OnViewModelSetOverride();
                 TriggerViewModelLoaded(value);
             }

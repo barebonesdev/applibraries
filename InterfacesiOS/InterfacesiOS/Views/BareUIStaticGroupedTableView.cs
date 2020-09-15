@@ -78,9 +78,9 @@ namespace InterfacesiOS.Views
             {
                 try
                 {
-                    var type = bindingHost.BindingObject.GetType();
+                    var type = bindingHost.DataContext.GetType();
                     var prop = type.GetProperty(bindingValuePropertyName);
-                    prop.SetValue(bindingHost.BindingObject, true);
+                    prop.SetValue(bindingHost.DataContext, true);
                 }
                 catch { }
             });

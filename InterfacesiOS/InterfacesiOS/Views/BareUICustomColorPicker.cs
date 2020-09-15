@@ -27,7 +27,7 @@ namespace InterfacesiOS.Views
 
         private void Initialize()
         {
-            m_internalBinding.BindingObject = this;
+            m_internalBinding.DataContext = this;
 
             var rectanglePreview = new UIView()
             {
