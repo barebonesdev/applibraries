@@ -74,12 +74,12 @@ namespace BareMvvm.Core.Bindings
 			return value;
 		}
 
-		public Action BindView(BindingExpression bindingExpression, BindingHost bindingHost, IValueConverter converter)
+		public Action BindView(BindingExpression bindingExpression, BindingRegistration bindingRegistration, IValueConverter converter)
 		{
 			EventHandler<TArgs> handler =
 				(sender, args) =>
 				{
-					ViewValueChangedHandler.HandleViewValueChanged(bindingExpression, newValueFunc, bindingHost, converter, args);
+					ViewValueChangedHandler.HandleViewValueChanged(bindingExpression, newValueFunc, bindingRegistration, converter, args);
 				};
 
 			addHandler((TView)bindingExpression.View, handler);

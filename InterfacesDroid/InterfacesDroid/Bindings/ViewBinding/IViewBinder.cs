@@ -51,6 +51,6 @@ namespace BareMvvm.Core.Bindings
 	/// </summary>
 	public interface IViewBinder
 	{
-		Action BindView(BindingExpression bindingExpression, BindingHost bindingHost, IValueConverter converter);
+		Action BindView(BindingExpression bindingExpression, BindingRegistration bindingRegistration, IValueConverter converter);
 	}
 }

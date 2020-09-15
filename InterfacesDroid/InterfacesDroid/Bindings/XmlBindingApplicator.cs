@@ -303,13 +303,13 @@ namespace BareMvvm.Core.Bindings
                     }
                 };
 
-                BindingHost.SetBinding(bindingExpression.Source, bindingCallback);
+                bindingRegistration = BindingHost.SetBinding(bindingExpression.Source, bindingCallback);
 
                 if (bindingExpression.Mode == BindingMode.TwoWay)
                 {
                     if (ViewBinderRegistry.TryGetViewBinder(bindingExpression.View.GetType(), bindingExpression.Target, out IViewBinder binder))
                     {
-                        var unbindAction = binder.BindView(bindingExpression, BindingHost, converter);
+                        var unbindAction = binder.BindView(bindingExpression, bindingRegistration, converter);
                         if (unbindAction != null)
                         {
                             _unbindActions.Add(unbindAction);

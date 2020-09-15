@@ -61,8 +61,22 @@ namespace InterfacesDroid.Views
         private View _viewForBinding;
         protected virtual View CreateView(LayoutInflater inflater, int resourceId, ViewGroup root)
         {
-            _viewForBinding = inflater.Inflate(resourceId, root, false); // Setting this to false but including the root ensures that the resource's root layout properties will be respected
-            return _viewForBinding;
+            try
+            {
+                _viewForBinding = inflater.Inflate(resourceId, root, false); // Setting this to false but including the root ensures that the resource's root layout properties will be respected
+                return _viewForBinding;
+            }
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
+            catch (Exception ex)
+#pragma warning restore IDE0059 // Unnecessary assignment of a value
+            {
+                if (Debugger.IsAttached)
+                {
+                    Debugger.Break();
+                }
+
+                throw;
+            }
         }
 
         private object _dataContext;
@@ -138,7 +152,7 @@ namespace InterfacesDroid.Views
 
         public void SetBinding(string dataContextSourcePropertyName, Action onValueChanged)
         {
-            _bindingApplicator.BindingHost.SetBinding(dataContextSourcePropertyName, onValueChanged, triggerEvenWhenSetThroughBinding: true);
+            _bindingApplicator.BindingHost.SetBinding(dataContextSourcePropertyName, onValueChanged);
         }
 
         ~InflatedViewWithBinding()

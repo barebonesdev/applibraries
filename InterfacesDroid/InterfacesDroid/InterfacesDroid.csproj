@@ -75,7 +75,6 @@
     <Compile Include="Bindings\BindingMode.cs" />
     <Compile Include="Bindings\IValueConverter.cs" />
     <Compile Include="Bindings\Programmatic\Binding.cs" />
-    <Compile Include="Bindings\PropertyBinding.cs" />
     <Compile Include="Bindings\Utilities\DelegateUtility.cs" />
     <Compile Include="Bindings\Utilities\TypeUtility.cs" />
     <Compile Include="Bindings\ValueConverters\ListAdapterConverter.cs" />

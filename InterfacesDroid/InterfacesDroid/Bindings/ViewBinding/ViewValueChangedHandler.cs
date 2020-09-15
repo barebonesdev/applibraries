@@ -47,7 +47,7 @@ namespace BareMvvm.Core.Bindings
         internal static void HandleViewValueChanged<TView, TArgs, TNewValue>(
             BindingExpression bindingExpression,
             Func<TView, TArgs, TNewValue> newValueFunc,
-            BindingHost bindingHost,
+            BindingRegistration bindingRegistration,
             IValueConverter converter,
             TArgs args)
 #if __ANDROID__ || MONODROID
@@ -60,7 +60,7 @@ namespace BareMvvm.Core.Bindings
 
                 UpdateSourceProperty(
                     bindingExpression,
-                    bindingHost,
+                    bindingRegistration,
                     rawValue,
                     converter,
                     bindingExpression.ConverterParameter);
@@ -80,31 +80,29 @@ namespace BareMvvm.Core.Bindings
 
         internal static void UpdateSourceProperty<T>(
             BindingExpression bindingExpression,
-            BindingHost bindingHost,
+            BindingRegistration bindingRegistration,
             T value,
             IValueConverter valueConverter,
             string converterParameter)
         {
             object newValue;
-            var sourceObjAndProp = bindingHost.GetProperty(bindingExpression.Source);
-            if (sourceObjAndProp == null)
+            var sourceProperty = bindingRegistration.GetSourceProperty();
+            if (sourceProperty == null)
             {
                 return;
             }
 
-            var sourceProperty = sourceObjAndProp.Item2;
-
             if (valueConverter != null)
             {
                 newValue = valueConverter.ConvertBack(value,
-                    sourceProperty.PropertyType,
+                    sourceProperty.PropertyInfo.PropertyType,
                     converterParameter,
                     CultureInfo.CurrentCulture);
             }
             else
             {
                 // Implicit converter logic for DoubleToString round trip
-                if (sourceProperty.PropertyType == typeof(double)
+                if (sourceProperty.PropertyInfo.PropertyType == typeof(double)
                     && value is string)
                 {
                     double valueAsDouble;
@@ -127,8 +125,8 @@ namespace BareMvvm.Core.Bindings
 
             try
             {
-                // Must set through binding host so that it'll correctly ignore property change events from just being set
-                bindingHost.SetValue(bindingExpression.Source, newValue);
+                // Must set through binding registration so that it'll correctly ignore property change events from just being set
+                bindingRegistration.SetSourceValue(newValue, preObtainedSourceProperty: sourceProperty);
             }
             catch (Exception ex)
             {

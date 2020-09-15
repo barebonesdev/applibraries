@@ -12,6 +12,7 @@ using CoreAnimation;
 using System.Collections;
 using CoreGraphics;
 using BareMvvm.Core;
+using BareMvvm.Core.Binding;
 
 namespace InterfacesiOS.Binding
 {
@@ -19,24 +20,7 @@ namespace InterfacesiOS.Binding
     {
         public void SetTextFieldTextBinding(UITextField textField, string propertyPath, Func<object, string> converter = null, Func<string, object> backConverter = null)
         {
-            textField.AddTarget(new WeakEventHandler<EventArgs>(delegate
-            {
-                object value;
-                
-                if (backConverter != null)
-                {
-                    value = backConverter(textField.Text);
-                }
-                else
-                {
-                    value = textField.Text;
-                }
-
-                SetValue(propertyPath, value);
-
-            }).Handler, UIControlEvent.EditingChanged);
-
-            SetBinding(propertyPath, sourceValue =>
+            var registration = SetBinding(propertyPath, sourceValue =>
             {
                 string text;
 
@@ -51,6 +35,23 @@ namespace InterfacesiOS.Binding
 
                 textField.Text = text;
             });
+
+            textField.AddTarget(new WeakEventHandler<EventArgs>(delegate
+            {
+                object value;
+
+                if (backConverter != null)
+                {
+                    value = backConverter(textField.Text);
+                }
+                else
+                {
+                    value = textField.Text;
+                }
+
+                registration.SetSourceValue(value);
+
+            }).Handler, UIControlEvent.EditingChanged);
         }
 
         /// <summary>
@@ -83,105 +84,107 @@ namespace InterfacesiOS.Binding
 
         public void SetTextViewTextBinding(UITextView textView, string propertyPath)
         {
-            textView.Changed += new WeakEventHandler(delegate
-            {
-                SetValue(propertyPath, textView.Text);
-            }).Handler;
-
-            SetBinding<string>(propertyPath, txt =>
+            var registration = SetBinding<string>(propertyPath, txt =>
             {
                 textView.Text = txt;
             });
+
+            textView.Changed += new WeakEventHandler(delegate
+            {
+                registration.SetSourceValue(textView.Text);
+            }).Handler;
         }
 
         public void SetSliderBinding(UISlider slider, string propertyPath, bool twoWay = false)
         {
-            if (twoWay)
-            {
-                slider.ValueChanged += delegate
-                {
-                    SetValue(propertyPath, slider.Value);
-                };
-            }
-
-            SetBinding(propertyPath, value =>
+            var registration = SetBinding(propertyPath, value =>
             {
                 float val = float.Parse(value.ToString());
                 slider.Value = val;
             });
+
+            if (twoWay)
+            {
+                slider.ValueChanged += delegate
+                {
+                    registration.SetSourceValue(slider.Value);
+                };
+            }
         }
 
         public void SetDateBinding(BareUIInlineDatePicker datePicker, string propertyPath)
         {
-            datePicker.DateChanged += new WeakEventHandler<DateTime?>((sender, date) =>
-            {
-                var objAndProp = GetProperty(propertyPath);
-                if (objAndProp != null)
-                {
-                    var prop = objAndProp.Item2;
-
-                    if (prop.PropertyType == typeof(DateTime?))
-                    {
-                        prop.SetValue(DataContext, date);
-                    }
-                    else
-                    {
-                        prop.SetValue(DataContext, date.GetValueOrDefault());
-                    }
-                }
-            }).Handler;
-
-            SetBinding(propertyPath, value =>
+            var reg = SetBinding(propertyPath, value =>
             {
                 datePicker.GetType().GetProperty(nameof(datePicker.Date)).SetValue(datePicker, value);
             });
+
+            datePicker.DateChanged += new WeakEventHandler<DateTime?>((sender, date) =>
+            {
+                var objAndProp = reg.GetSourceProperty();
+                if (objAndProp != null)
+                {
+                    var prop = objAndProp.PropertyInfo;
+
+                    if (prop.PropertyType == typeof(DateTime?))
+                    {
+                        reg.SetSourceValue(date, objAndProp);
+                    }
+                    else
+                    {
+                        reg.SetSourceValue(date.GetValueOrDefault(), objAndProp);
+                    }
+                }
+            }).Handler;
         }
 
         public void SetTimeBinding(UIDatePicker datePicker, string propertyPath)
         {
-            datePicker.ValueChanged += delegate
-            {
-                SetValue(propertyPath, BareUIHelper.NSDateToDateTime(datePicker.Date).TimeOfDay);
-            };
-
-            SetBinding<TimeSpan>(propertyPath, value =>
+            var reg = SetBinding<TimeSpan>(propertyPath, value =>
             {
                 datePicker.Date = BareUIHelper.DateTimeToNSDate(DateTime.Today.Add(value));
             });
+
+            datePicker.ValueChanged += delegate
+            {
+                reg.SetSourceValue(BareUIHelper.NSDateToDateTime(datePicker.Date).TimeOfDay);
+            };
         }
 
         public void SetTimeBinding(BareUIInlineTimePicker timePicker, string propertyPath)
         {
-            timePicker.TimeChanged += new WeakEventHandler<TimeSpan?>((sender, time) =>
-            {
-                var objAndProp = GetProperty(propertyPath);
-                if (objAndProp != null)
-                {
-                    var prop = objAndProp.Item2;
-
-                    if (prop.PropertyType == typeof(TimeSpan?))
-                    {
-                        prop.SetValue(DataContext, time);
-                    }
-                    else
-                    {
-                        prop.SetValue(DataContext, time.GetValueOrDefault());
-                    }
-                }
-            }).Handler;
-
-            SetBinding(propertyPath, value =>
+            var reg = SetBinding(propertyPath, value =>
             {
                 timePicker.GetType().GetProperty(nameof(timePicker.Time)).SetValue(timePicker, value);
             });
+
+            timePicker.TimeChanged += new WeakEventHandler<TimeSpan?>((sender, time) =>
+            {
+                var objAndProp = reg.GetSourceProperty();
+                if (objAndProp != null)
+                {
+                    var prop = objAndProp.PropertyInfo;
+
+                    if (prop.PropertyType == typeof(TimeSpan?))
+                    {
+                        reg.SetSourceValue(time, objAndProp);
+                    }
+                    else
+                    {
+                        reg.SetSourceValue(time.GetValueOrDefault(), objAndProp);
+                    }
+                }
+            }).Handler;
         }
 
         private List<EventHandler<EventArgs>> _toggledViaHeaderHandlers = new List<EventHandler<EventArgs>>();
         public void SetSwitchBinding(BareUISwitch switchView, string propertyPath)
         {
+            var reg = SetSwitchBinding(switchView.Switch, propertyPath);
+
             var handler = new EventHandler<EventArgs>(delegate
             {
-                SetValue(propertyPath, switchView.Switch.On);
+                reg.SetSourceValue(switchView.Switch.On);
             });
 
             // In order to avoid disposing, we need to store the handler.
@@ -191,42 +194,26 @@ namespace InterfacesiOS.Binding
 
             switchView.ToggledViaHeader += new WeakEventHandler(handler).Handler;
 
-            SetSwitchBinding(switchView.Switch, propertyPath);
         }
 
-        public void SetSwitchBinding(UISwitch switchView, string propertyPath)
+        public BindingRegistration SetSwitchBinding(UISwitch switchView, string propertyPath)
         {
-            switchView.ValueChanged += new WeakEventHandler(delegate
-            {
-                SetValue(propertyPath, switchView.On);
-            }).Handler;
-
-            SetBinding<bool>(propertyPath, value =>
+            var reg = SetBinding<bool>(propertyPath, value =>
             {
                 switchView.On = value;
             });
+
+            switchView.ValueChanged += new WeakEventHandler(delegate
+            {
+                reg.SetSourceValue(switchView.On);
+            }).Handler;
+
+            return reg;
         }
 
         public void SetSelectedColorBinding(BareUIInlineColorPickerView pickerView, string propertyPath)
         {
-            pickerView.SelectionChanged += new WeakEventHandler<CGColor>((sender, color) =>
-            {
-                var objAndProperty = GetProperty(propertyPath);
-                if (objAndProperty != null)
-                {
-                    var property = objAndProperty.Item2;
-                    if (property.PropertyType == typeof(byte[]))
-                    {
-                        property.SetValue(DataContext, BareUIHelper.ToColorBytes(color));
-                    }
-                    else if (property.PropertyType == typeof(CGColor))
-                    {
-                        property.SetValue(DataContext, color);
-                    }
-                }
-            }).Handler;
-
-            SetBinding(propertyPath, value =>
+            var reg = SetBinding(propertyPath, value =>
             {
                 if (value is CGColor color)
                 {
@@ -237,19 +224,36 @@ namespace InterfacesiOS.Binding
                     pickerView.SelectedColor = BareUIHelper.ToCGColor(bytes);
                 }
             });
+
+            pickerView.SelectionChanged += new WeakEventHandler<CGColor>((sender, color) =>
+            {
+                var objAndProperty = reg.GetSourceProperty();
+                if (objAndProperty != null)
+                {
+                    var property = objAndProperty.PropertyInfo;
+                    if (property.PropertyType == typeof(byte[]))
+                    {
+                        reg.SetSourceValue(BareUIHelper.ToColorBytes(color), objAndProperty);
+                    }
+                    else if (property.PropertyType == typeof(CGColor))
+                    {
+                        reg.SetSourceValue(color, objAndProperty);
+                    }
+                }
+            }).Handler;
         }
 
         public void SetSelectedItemBinding(BareUIInlinePickerView pickerView, string propertyPath)
         {
-            pickerView.SelectionChanged += new WeakEventHandler<object>((sender, item) =>
-            {
-                SetValue(propertyPath, item);
-            }).Handler;
-
-            SetBinding(propertyPath, selectedItem =>
+            var reg = SetBinding(propertyPath, selectedItem =>
             {
                 pickerView.SelectedItem = selectedItem;
             });
+
+            pickerView.SelectionChanged += new WeakEventHandler<object>((sender, item) =>
+            {
+                reg.SetSourceValue(item);
+            }).Handler;
         }
 
         public void SetItemsSourceBinding(BareUIInlinePickerView pickerView, string propertyPath)
