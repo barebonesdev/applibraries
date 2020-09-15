@@ -71,7 +71,6 @@
     <Compile Include="App\AndroidDispatcher.cs" />
     <Compile Include="App\NativeDroidApplication.cs" />
     <Compile Include="Bindings\Adapters\BindableListAdapter.cs" />
-    <Compile Include="Bindings\BindingApplicator.cs" />
     <Compile Include="Bindings\BindingExpression.cs" />
     <Compile Include="Bindings\BindingMode.cs" />
     <Compile Include="Bindings\IValueConverter.cs" />

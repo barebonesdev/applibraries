@@ -35,8 +35,10 @@
 #endregion
 
 using System;
+using System.Reflection;
 #if __ANDROID__ || MONODROID
 using Android.Views;
+using BareMvvm.Core.Binding;
 #else
 using View = System.Object;
 #endif
@@ -72,17 +74,17 @@ namespace BareMvvm.Core.Bindings
 			return value;
 		}
 
-		public Action BindView(PropertyBinding propertyBinding, object dataContext)
+		public Action BindView(BindingExpression bindingExpression, BindingHost bindingHost, IValueConverter converter)
 		{
 			EventHandler<TArgs> handler =
 				(sender, args) =>
 				{
-					ViewValueChangedHandler.HandleViewValueChanged(propertyBinding, newValueFunc, dataContext, args);
+					ViewValueChangedHandler.HandleViewValueChanged(bindingExpression, newValueFunc, bindingHost, converter, args);
 				};
 
-			addHandler((TView)propertyBinding.View, handler);
+			addHandler((TView)bindingExpression.View, handler);
 
-			Action removeAction = () => { removeHandler((TView)propertyBinding.View, handler); };
+			Action removeAction = () => { removeHandler((TView)bindingExpression.View, handler); };
 			return removeAction;
 		}
 	}

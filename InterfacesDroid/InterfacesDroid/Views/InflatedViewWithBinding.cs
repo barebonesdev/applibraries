@@ -17,6 +17,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using InterfacesDroid.Bindings.Programmatic;
 using ToolsPortable;
+using BareMvvm.Core.Binding;
 
 namespace InterfacesDroid.Views
 {
@@ -64,69 +65,41 @@ namespace InterfacesDroid.Views
             return _viewForBinding;
         }
 
-        private WeakReference _dataContext;
+        private object _dataContext;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
+        private bool _appliedXmlBindings = false;
         public object DataContext
         {
-            get { return _dataContext?.Target; }
+            get { return _dataContext; }
             set
             {
-                object oldValue = _dataContext?.Target;
+                object oldValue = _dataContext;
 
-                if (_dataContextPropertyChangedHandler != null && oldValue is INotifyPropertyChanged oldValuePropertyChanged)
-                {
-                    oldValuePropertyChanged.PropertyChanged -= _dataContextPropertyChangedHandler;
-                }
+                _dataContext = value;
 
-                _bindingApplicator.RemoveBindings();
+                try
+                {
+                    _bindingApplicator.BindingHost.DataContext = value;
 
-                if (value != null)
-                {
-                    _dataContext = new WeakReference(value);
-                }
-                else
-                {
-                    _dataContext = null;
-                }
-
-                if (value != null && _viewForBinding != null)
-                {
-                    try
+                    if (!_appliedXmlBindings && _viewForBinding != null)
                     {
-                        _bindingApplicator.ApplyBindings(_viewForBinding, value, _resource);
+                        _appliedXmlBindings = true;
+                        _bindingApplicator.ApplyBindings(_viewForBinding, _resource);
                     }
 
-                    catch (Exception ex)
-                    {
-                        if (Debugger.IsAttached)
-                        {
-                            Console.WriteLine(ex);
-                            Debugger.Break();
-                        }
-                    }
+                    OnDataContextChanged(oldValue, value);
                 }
-
-                if (value != null)
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
+                catch (Exception ex)
+#pragma warning restore IDE0059 // Unnecessary assignment of a value
                 {
-                    // Start listening to properties if not already and it's wanted
-                    if (_listeningToDataContextProperties && _dataContextPropertyChangedHandler == null)
+                    if (Debugger.IsAttached)
                     {
-                        SubscribeToDataContextPropertyChanges();
-                    }
-
-                    // Apply all of the bindings when the data context changes
-                    foreach (var binding in _programmaticBindings)
-                    {
-                        foreach (var action in binding.Value)
-                        {
-                            ExecuteBinding(binding.Key, action);
-                        }
+                        Debugger.Break();
                     }
                 }
-
-                OnDataContextChanged(oldValue, value);
             }
         }
 
@@ -145,7 +118,7 @@ namespace InterfacesDroid.Views
 
                     object rawValue = DataContext.GetType().GetProperty(dataContextSourcePropertyName).GetValue(DataContext);
 
-                    BindingApplicator.SetTargetProperty(
+                    XmlBindingApplicator.SetTargetProperty(
                         rawValue: rawValue,
                         view: target,
                         targetProperty: targetProp,
@@ -163,82 +136,14 @@ namespace InterfacesDroid.Views
             });
         }
 
-        private Dictionary<string, List<Action>> _programmaticBindings = new Dictionary<string, List<Action>>();
-
         public void SetBinding(string dataContextSourcePropertyName, Action onValueChanged)
         {
-            List<Action> actions;
-            if (!_programmaticBindings.TryGetValue(dataContextSourcePropertyName, out actions))
-            {
-                actions = new List<Action>();
-                _programmaticBindings[dataContextSourcePropertyName] = actions;
-            }
-
-            actions.Add(onValueChanged);
-
-            EnableListeningToDataContextProperties();
-
-            if (DataContext != null)
-            {
-                ExecuteBinding(dataContextSourcePropertyName, onValueChanged);
-            }
-        }
-
-        private PropertyChangedEventHandler _dataContextPropertyChangedHandler;
-        private bool _listeningToDataContextProperties = false;
-        private void EnableListeningToDataContextProperties()
-        {
-            if (_listeningToDataContextProperties)
-            {
-                return;
-            }
-
-            _listeningToDataContextProperties = true;
-
-            SubscribeToDataContextPropertyChanges();
-        }
-
-        private void SubscribeToDataContextPropertyChanges()
-        {
-            if (DataContext is INotifyPropertyChanged dataContext)
-            {
-                if (_dataContextPropertyChangedHandler == null)
-                {
-                    _dataContextPropertyChangedHandler = new WeakEventHandler<PropertyChangedEventArgs>(DataContext_PropertyChanged).Handler;
-                }
-
-                dataContext.PropertyChanged += _dataContextPropertyChangedHandler;
-            }
-        }
-
-        private void DataContext_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (_programmaticBindings.TryGetValue(e.PropertyName, out List<Action> actions))
-            {
-                foreach (var action in actions)
-                {
-                    ExecuteBinding(e.PropertyName, action);
-                }
-            }
-        }
-
-        private void ExecuteBinding(string sourceDataContextPropertyName, Action onValueChanged)
-        {
-            try
-            {
-                onValueChanged();
-            }
-            catch (Exception ex)
-            {
-#if DEBUG
-                System.Diagnostics.Debugger.Break();
-#endif
-            }
+            _bindingApplicator.BindingHost.SetBinding(dataContextSourcePropertyName, onValueChanged, triggerEvenWhenSetThroughBinding: true);
         }
 
         ~InflatedViewWithBinding()
         {
-            _bindingApplicator.RemoveBindings();
+            _bindingApplicator.Unregister();
         }
 
         protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName]string propertyName = null)

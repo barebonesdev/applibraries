@@ -54,6 +54,11 @@ using Android.Widget;
 using ToolsPortable;
 using System.Reflection;
 using Google.Android.Material.TextField;
+using BareMvvm.Core.Binding;
+using Android.Content.Res;
+using AndroidX.Core.View;
+using System.Globalization;
+using InterfacesDroid.Helpers;
 
 namespace BareMvvm.Core.Bindings
 {
@@ -67,6 +72,9 @@ namespace BareMvvm.Core.Bindings
     /// </summary>
 	public class XmlBindingApplicator
     {
+        private static readonly ViewBinderRegistry ViewBinderRegistry = new ViewBinderRegistry();
+        public BindingHost BindingHost { get; private set; } = new BindingHost();
+
         private static readonly List<Assembly> _assembliesThatNeedProcessing = new List<Assembly>()
         {
             // Include this assembly as it has several converters
@@ -110,8 +118,6 @@ namespace BareMvvm.Core.Bindings
             = XNamespace.Get("http://schemas.android.com/apk/res-auto") + "Binding";
         static readonly XName idXmlAttribute
             = XNamespace.Get("http://schemas.android.com/apk/res/android") + "id";
-
-        static readonly ViewBinderRegistry registry = new ViewBinderRegistry();
 
         private static Dictionary<string, Type> _valueConverterTypes = new Dictionary<string, Type>();
 
@@ -157,109 +163,25 @@ namespace BareMvvm.Core.Bindings
             }
         }
 
-        readonly List<Action> unbindActions = new List<Action>();
-
         static readonly Dictionary<int, List<XElement>> layoutCache = new Dictionary<int, List<XElement>>();
 
-        public void RemoveBindings()
+        private List<Action> _unbindActions = new List<Action>();
+
+        public void Unregister()
         {
-            foreach (var unbindAction in unbindActions)
+            foreach (var action in _unbindActions)
             {
                 try
                 {
-                    unbindAction();
+                    action();
                 }
-                catch
-                {
-                    // Log this.
-                    if (Debugger.IsAttached)
-                    {
-                        Debugger.Break();
-                        throw;
-                    }
-                }
+                catch { }
             }
 
-            unbindActions.Clear();
+            BindingHost.Unregister();
         }
 
-        public void ApplyBindings(Activity activity, string viewModelPropertyName, int layoutResourceId)
-        {
-            if (ApplicationContextHolder.Context == null)
-            {
-                ApplicationContextHolder.Context = activity.ApplicationContext;
-            }
-
-            // Always get views since we need to localize
-            var rootView = activity.Window.DecorView.FindViewById(Android.Resource.Id.Content);
-            List<View> views = GetAllChildrenInView(rootView);
-            List<XElement> elements = null;
-
-            if (layoutResourceId > -1)
-            {
-                /* Load the XML elements of the view. */
-                elements = GetLayoutAsXmlElements(activity, layoutResourceId);
-            }
-
-            /* If there is at least one 'Binding' attribute set in the XML file */
-            if (elements != null && elements.Any(xe => xe.Attribute(bindingXmlNamespace) != null))
-            {
-                /* Remove the first views that are not part of the layout file. 
-				 * This includes the first FrameView. */
-                int elementsCount = elements.Count;
-                int difference = views.Count - elementsCount;
-                if (difference > 0)
-                {
-                    views = views.GetRange(difference, views.Count - difference);
-                }
-            }
-
-            if (elements != null && elements.Any() && views != null && views.Any())
-            {
-                /* Get all the binding inside the XML file. */
-                var bindingInfos = ExtractBindingsFromLayoutFile(elements, views);
-                if (bindingInfos == null || !bindingInfos.Any())
-                {
-                    return;
-                }
-
-                BindingApplicator binder = new BindingApplicator();
-
-                foreach (var bindingInfo in bindingInfos)
-                {
-                    IValueConverter valueConverter = null;
-                    string valueConverterName = bindingInfo.Converter;
-
-                    if (!string.IsNullOrWhiteSpace(valueConverterName))
-                    {
-                        var valueConverterType = GetValueConverter(valueConverterName);
-                        if (valueConverterType != null)
-                        {
-                            var valueConverterConstructor = valueConverterType.GetConstructor(Type.EmptyTypes);
-                            if (valueConverterConstructor != null)
-                            {
-                                valueConverter = valueConverterConstructor.Invoke(null) as IValueConverter;
-                            }
-                            else
-                            {
-                                throw new InvalidOperationException(
-                                    $"Value converter {valueConverterName} needs "
-                                    + "an empty constructor to be instanciated.");
-                            }
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException(
-                                $"There is no converter named {valueConverterName}.");
-                        }
-                    }
-
-                    binder.ApplyBinding(bindingInfo, activity, viewModelPropertyName, valueConverter, unbindActions);
-                }
-            }
-        }
-
-        public void ApplyBindings(View view, object dataContext, int layoutResourceId)
+        public void ApplyBindings(View view, int layoutResourceId)
         {
             Context context = view.Context;
 
@@ -286,8 +208,6 @@ namespace BareMvvm.Core.Bindings
                 {
                     return;
                 }
-
-                BindingApplicator binder = new BindingApplicator();
 
                 foreach (var bindingInfo in bindingInfos)
                 {
@@ -318,14 +238,208 @@ namespace BareMvvm.Core.Bindings
                         }
                     }
 
-                    binder.ApplyBinding(bindingInfo, dataContext, valueConverter, unbindActions);
+                    ApplyBinding(bindingInfo, valueConverter);
                 }
             }
         }
 
-        public static void SetViewBinder(Type viewType, string propertyName, IViewBinder binder)
+        private void ApplyBinding(
+            BindingExpression bindingExpression,
+            IValueConverter converter)
         {
-            registry.SetViewBinder(viewType, propertyName, binder);
+            PropertyInfo targetProperty;
+            if (bindingExpression.Target == "Strikethrough" && bindingExpression.View is TextView tv)
+            {
+                targetProperty = typeof(TextViewStrikethroughWrapper).GetProperty(nameof(TextViewStrikethroughWrapper.Strikethrough));
+            }
+            else
+            {
+                targetProperty = bindingExpression.View.GetType().GetProperty(bindingExpression.Target);
+            }
+
+            if (targetProperty == null)
+            {
+                string exMessage = "targetProperty on View could not be found. View: " + bindingExpression.View.GetType() + ". Target: " + bindingExpression.Target;
+
+                if (Debugger.IsAttached)
+                {
+                    Debugger.Break();
+                }
+
+                throw new KeyNotFoundException(exMessage);
+            }
+
+            // We try localizing, otherwise we bind
+            if (!TryHandleLocalizationBinding(bindingExpression, targetProperty, converter))
+            {
+                BindingRegistration bindingRegistration = null;
+
+                Action<object> bindingCallback = value =>
+                {
+                    try
+                    {
+                        SetTargetProperty(
+                            rawValue: value,
+                            view: bindingExpression.View,
+                            targetProperty,
+                            converter,
+                            bindingExpression.ConverterParameter);
+                    }
+                    catch (Exception ex)
+                    {
+                        // View is disposed, should unregister
+                        if (ex is TargetInvocationException && ex.InnerException is ObjectDisposedException)
+                        {
+                            // Note that don't need to call unbind action on the two way view binder since view is already disposed
+                            bindingRegistration?.Unregister();
+                        }
+                        else
+                        {
+                            if (Debugger.IsAttached)
+                            {
+                                Debugger.Break();
+                            }
+                        }
+                    }
+                };
+
+                BindingHost.SetBinding(bindingExpression.Source, bindingCallback);
+
+                if (bindingExpression.Mode == BindingMode.TwoWay)
+                {
+                    if (ViewBinderRegistry.TryGetViewBinder(bindingExpression.View.GetType(), bindingExpression.Target, out IViewBinder binder))
+                    {
+                        var unbindAction = binder.BindView(bindingExpression, BindingHost, converter);
+                        if (unbindAction != null)
+                        {
+                            _unbindActions.Add(unbindAction);
+                        }
+                    }
+                    else
+                    {
+                        if (Debugger.IsAttached)
+                        {
+                            Debugger.Break();
+                        }
+                    }
+                }
+            }
+        }
+
+        private static bool TryHandleLocalizationBinding(BindingExpression bindingExpression, PropertyInfo targetProperty, IValueConverter converter)
+        {
+            if (bindingExpression.Source.StartsWith("@"))
+            {
+                string locName = bindingExpression.Source.Substring(1);
+                string locValue = PortableLocalizedResources.GetString(locName);
+
+                SetTargetProperty(locValue, bindingExpression.View, targetProperty, converter, bindingExpression.ConverterParameter);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public static void SetTargetProperty(object rawValue,
+            object view, PropertyInfo targetProperty, IValueConverter converter, string converterParameter)
+        {
+            try
+            {
+                if (targetProperty == null)
+                    throw new ArgumentNullException(nameof(targetProperty));
+
+                if (view == null)
+                {
+                    throw new ArgumentNullException(nameof(view));
+                }
+
+                // Use the converter
+                var sourcePropertyValue = converter == null
+                    ? rawValue
+                    : converter.Convert(rawValue,
+                        targetProperty.PropertyType,
+                        converterParameter,
+                        CultureInfo.CurrentCulture);
+
+                /* Need some implicit type coercion here. 
+                 * Perhaps pull that in from Calciums property binding system. */
+                var property = targetProperty;
+                if (property.PropertyType == typeof(string)
+                    && !(sourcePropertyValue is string)
+                    && sourcePropertyValue != null)
+                {
+                    sourcePropertyValue = sourcePropertyValue.ToString();
+                }
+                else if (property.PropertyType == typeof(Android.Views.ViewStates))
+                {
+                    if (!(sourcePropertyValue is Android.Views.ViewStates))
+                    {
+                        // Implicit visibility converter
+                        bool? shouldBeVisible = null;
+                        if (sourcePropertyValue is bool boolean)
+                        {
+                            shouldBeVisible = boolean;
+                        }
+                        else
+                        {
+                            // If not null, visible
+                            shouldBeVisible = sourcePropertyValue != null;
+                        }
+
+                        if (shouldBeVisible != null)
+                        {
+                            sourcePropertyValue = shouldBeVisible.Value ? Android.Views.ViewStates.Visible : Android.Views.ViewStates.Gone;
+                        }
+                    }
+                }
+
+                if (targetProperty.DeclaringType == typeof(TextViewStrikethroughWrapper))
+                {
+                    var wrapper = new TextViewStrikethroughWrapper(view as TextView);
+                    targetProperty.SetValue(wrapper, sourcePropertyValue);
+                }
+                else if (view is View androidView && targetProperty.Name == nameof(androidView.BackgroundTintList) && sourcePropertyValue is ColorStateList colorStateList)
+                {
+                    // Use ViewCompat since this property didn't exist till API 21
+                    try
+                    {
+                        ViewCompat.SetBackgroundTintList(androidView, colorStateList);
+                    }
+                    catch (Java.Lang.RuntimeException)
+                    {
+                        // This theoretically shouldn't ever fail, yet it seems to fail sometimes due to a null reference exception
+                        // which makes no sense. So I'll just catch it.
+                    }
+                }
+                else if (targetProperty.Name == nameof(View.HasFocus))
+                {
+                    // Don't do anything, these are only one-way where the viewmodel updates but the view never updates
+                }
+                else
+                {
+                    targetProperty.SetValue(view, sourcePropertyValue);
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                throw new Exception("Setting property error. View: " + view.GetType() + ". Target: " + targetProperty.Name + ". CanWrite: " + targetProperty.CanWrite, ex);
+            }
+        }
+
+        private class TextViewStrikethroughWrapper
+        {
+            private TextView _tv;
+            public TextViewStrikethroughWrapper(TextView tv)
+            {
+                _tv = tv;
+            }
+
+            public bool Strikethrough
+            {
+                get => _tv.GetStrikethrough();
+                set => _tv.SetStrikethrough(value);
+            }
         }
 
         /// <summary>
@@ -425,12 +539,12 @@ namespace BareMvvm.Core.Bindings
             return true;
         }
 
-        readonly Regex sourceRegex = new Regex(@"Source=(@?\w+(.\w+)+)", RegexOptions.Compiled);
-        readonly Regex targetRegex = new Regex(@"Target=(\w+(.\w+)+)", RegexOptions.Compiled);
-        readonly Regex converterRegex = new Regex(@"Converter=(\w+)", RegexOptions.Compiled);
-        readonly Regex converterParameterRegex = new Regex(@"ConverterParameter='([^']+)'|ConverterParameter=(\w+)", RegexOptions.Compiled);
-        readonly Regex modeRegex = new Regex(@"Mode=(\w+)", RegexOptions.Compiled);
-        readonly Regex changedEventRegex = new Regex(@"ChangedEvent=(\w+)", RegexOptions.Compiled);
+        private static readonly Regex sourceRegex = new Regex(@"Source=(@?\w+(.\w+)+)", RegexOptions.Compiled);
+        private static readonly Regex targetRegex = new Regex(@"Target=(\w+(.\w+)+)", RegexOptions.Compiled);
+        private static readonly Regex converterRegex = new Regex(@"Converter=(\w+)", RegexOptions.Compiled);
+        private static readonly Regex converterParameterRegex = new Regex(@"ConverterParameter='([^']+)'|ConverterParameter=(\w+)", RegexOptions.Compiled);
+        private static readonly Regex modeRegex = new Regex(@"Mode=(\w+)", RegexOptions.Compiled);
+        private static readonly Regex changedEventRegex = new Regex(@"ChangedEvent=(\w+)", RegexOptions.Compiled);
 
         /// <summary>
         /// Extracts the binding information represented 
@@ -443,7 +557,7 @@ namespace BareMvvm.Core.Bindings
         /// <returns>
         /// A list containing all the binding info objects.
         /// </returns>
-        List<BindingExpression> ExtractBindingsFromLayoutFile(
+        private static List<BindingExpression> ExtractBindingsFromLayoutFile(
             List<XElement> xmlElements, List<View> viewElements)
         {
             var result = new List<BindingExpression>();

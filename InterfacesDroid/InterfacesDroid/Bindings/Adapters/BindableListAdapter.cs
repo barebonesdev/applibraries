@@ -43,6 +43,7 @@ using System.Collections.Specialized;
 using Android.Content;
 using Android.Views;
 using Android.Widget;
+using BareMvvm.Core.Binding;
 
 namespace BareMvvm.Core.Bindings
 {
@@ -94,14 +95,19 @@ namespace BareMvvm.Core.Bindings
 			XmlBindingApplicator applicator;
 			if (!bindingsDictionary.TryGetValue(view, out applicator))
 			{
+				// Don't need weak references here since adapter should only create as many views
+				// as needed and then start recycling them
 				applicator = new XmlBindingApplicator();
+				bindingsDictionary[view] = applicator;
 			}
 			else
 			{
-				applicator.RemoveBindings();
+				applicator.Unregister();
 			}
 
-			applicator.ApplyBindings(view, item, layoutId);
+			applicator.BindingHost.DataContext = item;
+
+			applicator.ApplyBindings(view, layoutId);
 
 			return view;
 		}
@@ -115,7 +121,7 @@ namespace BareMvvm.Core.Bindings
 			
 			foreach (var operation in bindingsDictionary.Values)
 			{
-				operation.RemoveBindings();
+				operation.Unregister();
 			}
 
 			bindingsDictionary.Clear();
