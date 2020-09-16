@@ -24,9 +24,7 @@ namespace InterfacesDroid.Views
     public class InflatedViewWithBinding
         : RelativeLayout, INotifyPropertyChanged
     {
-        private XmlBindingApplicator _bindingApplicator = new XmlBindingApplicator();
-
-        private int _resource;
+        internal readonly BindingApplicator BindingApplicator = new BindingApplicator();
 
         public InflatedViewWithBinding(int resource, ViewGroup root) : base(root.Context)
         {
@@ -34,7 +32,6 @@ namespace InterfacesDroid.Views
             AutofillHelper.DisableForAll(this);
 
             // Issue: Since we place our content in a frame layout, we can't control wrap_content or match_parent from the level below
-            _resource = resource;
             var view = CreateView(LayoutInflater.FromContext(root.Context), resource, this);
             base.AddView(view);
         }
@@ -42,7 +39,6 @@ namespace InterfacesDroid.Views
         public InflatedViewWithBinding(int resource, Context context, IAttributeSet attrs) : base(context, attrs)
         {
             // Issue: Since we place our content in a frame layout, we can't control wrap_content or match_parent from the level below
-            _resource = resource;
             var view = CreateView(LayoutInflater.FromContext(context), resource, this);
             base.AddView(view);
         }
@@ -53,7 +49,6 @@ namespace InterfacesDroid.Views
             AutofillHelper.DisableForAll(this);
 
             // Issue: Since we place our content in a frame layout, we can't control wrap_content or match_parent from the level below
-            _resource = resource;
             var view = CreateView(LayoutInflater.FromContext(context), resource, this);
             base.AddView(view);
         }
@@ -83,7 +78,6 @@ namespace InterfacesDroid.Views
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private bool _appliedXmlBindings = false;
         public object DataContext
         {
             get { return _dataContext; }
@@ -95,13 +89,7 @@ namespace InterfacesDroid.Views
 
                 try
                 {
-                    _bindingApplicator.BindingHost.DataContext = value;
-
-                    if (!_appliedXmlBindings && _viewForBinding != null)
-                    {
-                        _appliedXmlBindings = true;
-                        _bindingApplicator.ApplyBindings(_viewForBinding, _resource);
-                    }
+                    BindingApplicator.BindingHost.DataContext = value;
 
                     OnDataContextChanged(oldValue, value);
                 }
@@ -132,7 +120,7 @@ namespace InterfacesDroid.Views
 
                     object rawValue = DataContext.GetType().GetProperty(dataContextSourcePropertyName).GetValue(DataContext);
 
-                    XmlBindingApplicator.SetTargetProperty(
+                    BindingApplicator.SetTargetProperty(
                         rawValue: rawValue,
                         view: target,
                         targetProperty: targetProp,
@@ -152,7 +140,7 @@ namespace InterfacesDroid.Views
 
         public void SetBinding(string dataContextSourcePropertyName, Action onValueChanged)
         {
-            _bindingApplicator.BindingHost.SetBinding(dataContextSourcePropertyName, onValueChanged);
+            BindingApplicator.BindingHost.SetBinding(dataContextSourcePropertyName, onValueChanged);
         }
 
         private bool _detached;
@@ -161,7 +149,7 @@ namespace InterfacesDroid.Views
             // We do NOT call the unregister methods since the view might become attached again (RecyclerView scenarios)...
             // and the applicator's unregister unwires the view listeners and all bindings... we just need to detach from the
             // data context, which is what the Detach method does. If DataContext is set again later, 
-            _bindingApplicator.BindingHost.Detach();
+            BindingApplicator.BindingHost.Detach();
             _detached = true;
 
             base.OnDetachedFromWindow();
@@ -175,7 +163,7 @@ namespace InterfacesDroid.Views
                 if (DataContext != null)
                 {
                     // Note that if DataContext is already equal to this, it no-ops
-                    _bindingApplicator.BindingHost.DataContext = DataContext;
+                    BindingApplicator.BindingHost.DataContext = DataContext;
                 }
 
                 _detached = false;
@@ -186,7 +174,7 @@ namespace InterfacesDroid.Views
 
         ~InflatedViewWithBinding()
         {
-            _bindingApplicator.Unregister();
+            BindingApplicator.Unregister();
         }
 
         protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName]string propertyName = null)

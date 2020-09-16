@@ -70,19 +70,18 @@
     <Compile Include="Adapters\ObservableAdapter.cs" />
     <Compile Include="App\AndroidDispatcher.cs" />
     <Compile Include="App\NativeDroidApplication.cs" />
-    <Compile Include="Bindings\Adapters\BindableListAdapter.cs" />
     <Compile Include="Bindings\BindingExpression.cs" />
+    <Compile Include="Bindings\BindingInterceptor.cs" />
     <Compile Include="Bindings\BindingMode.cs" />
     <Compile Include="Bindings\IValueConverter.cs" />
     <Compile Include="Bindings\Programmatic\Binding.cs" />
     <Compile Include="Bindings\Utilities\DelegateUtility.cs" />
     <Compile Include="Bindings\Utilities\TypeUtility.cs" />
-    <Compile Include="Bindings\ValueConverters\ListAdapterConverter.cs" />
     <Compile Include="Bindings\ViewBinding\IViewBinder.cs" />
     <Compile Include="Bindings\ViewBinding\ViewBinderRegistry.cs" />
     <Compile Include="Bindings\ViewBinding\ViewEventBinder.cs" />
     <Compile Include="Bindings\ViewBinding\ViewValueChangedHandler.cs" />
-    <Compile Include="Bindings\XmlBindingApplicator.cs" />
+    <Compile Include="Bindings\BindingApplicator.cs" />
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Converters\ColorArrayToColorConverter.cs" />
     <Compile Include="Converters\ColorArrayToColorStateListConverter.cs" />
@@ -159,9 +158,16 @@
     <AndroidResource Include="Resources\Values\BindingAttributes.xml" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Xamarin.Android.ViewPump">
+      <Version>2.0.3.2</Version>
+    </PackageReference>
     <PackageReference Include="Xamarin.Google.Android.Material">
       <Version>1.1.0.1-rc3</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Bindings\Adapters\" />
+    <Folder Include="Bindings\ValueConverters\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

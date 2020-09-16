@@ -18,6 +18,8 @@ using ToolsPortable;
 using InterfacesDroid.Activities;
 using InterfacesDroid.Extensions;
 using System.Globalization;
+using IO.Github.Inflationx.Viewpump;
+using InterfacesDroid.Bindings;
 
 namespace InterfacesDroid.App
 {
@@ -42,7 +44,7 @@ namespace InterfacesDroid.App
         protected NativeDroidApplication(IntPtr javaReference, JniHandleOwnership transfer) : base(javaReference, transfer)
         {
             // Register the calling assembly (the app) as a ValueConverter source
-            BareMvvm.Core.Bindings.XmlBindingApplicator.RegisterAssembly(System.Reflection.Assembly.GetCallingAssembly());
+            BareMvvm.Core.Bindings.BindingApplicator.RegisterAssembly(System.Reflection.Assembly.GetCallingAssembly());
 
             // These classes won't be linked away because of the code,
             // but we also won't have to construct unnecessarily either,
@@ -75,6 +77,10 @@ namespace InterfacesDroid.App
 
             _current = new WeakReference<NativeDroidApplication>(this);
 
+            ViewPump.Init(ViewPump.InvokeBuilder()
+                .AddInterceptor(new BindingInterceptor())
+                .Build());
+
             // Register the view model to view mappings
             foreach (var mapping in GetViewModelToViewMappings())
             {
@@ -100,6 +106,12 @@ namespace InterfacesDroid.App
 
             base.OnCreate();
         }
+
+        // Hmm overriding AttachBaseContext isn't supported from Xamarin: https://xamarin.github.io/bugzilla-archives/11/11182/bug.html
+        //protected override void AttachBaseContext(Context @base)
+        //{
+        //    base.AttachBaseContext(ViewPumpContextWrapper.Wrap(@base));
+        //}
 
         public abstract Dictionary<Type, Type> GetViewModelToViewMappings();
         public abstract Dictionary<Type, Type> GetViewModelToSplashMappings();
