@@ -155,6 +155,35 @@ namespace InterfacesDroid.Views
             _bindingApplicator.BindingHost.SetBinding(dataContextSourcePropertyName, onValueChanged);
         }
 
+        private bool _detached;
+        protected override void OnDetachedFromWindow()
+        {
+            // We do NOT call the unregister methods since the view might become attached again (RecyclerView scenarios)...
+            // and the applicator's unregister unwires the view listeners and all bindings... we just need to detach from the
+            // data context, which is what the Detach method does. If DataContext is set again later, 
+            _bindingApplicator.BindingHost.Detach();
+            _detached = true;
+
+            base.OnDetachedFromWindow();
+        }
+
+        protected override void OnAttachedToWindow()
+        {
+            // Ensure data context is set if we detached and then re-attached
+            if (_detached)
+            {
+                if (DataContext != null)
+                {
+                    // Note that if DataContext is already equal to this, it no-ops
+                    _bindingApplicator.BindingHost.DataContext = DataContext;
+                }
+
+                _detached = false;
+            }
+
+            base.OnAttachedToWindow();
+        }
+
         ~InflatedViewWithBinding()
         {
             _bindingApplicator.Unregister();
