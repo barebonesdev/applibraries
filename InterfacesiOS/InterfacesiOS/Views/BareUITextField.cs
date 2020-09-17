@@ -29,7 +29,14 @@ namespace InterfacesiOS.Views
             {
                 try
                 {
-                    TextField.HasFocus = this.Focused;
+                    if (context.NextFocusedView == this)
+                    {
+                        TextField.HasFocus = true;
+                    }
+                    else if (context.PreviouslyFocusedView == this)
+                    {
+                        TextField.HasFocus = false;
+                    }
                 }
                 catch { }
             }
@@ -53,10 +60,11 @@ namespace InterfacesiOS.Views
         {
             var errorButton = new UIButton(UIButtonType.Custom)
             {
-                Frame = new CGRect(0, 0, Frame.Size.Height, Frame.Size.Height)
+                Frame = new CGRect(0, 0, Frame.Size.Height, Frame.Size.Height),
+                TintColor = UIColor.Red
             };
 
-            errorButton.SetImage(UIImage.FromBundle("ic_error"), UIControlState.Normal);
+            errorButton.SetImage(UIImage.FromBundle("baseline_error_black_18pt").ImageWithRenderingMode(UIImageRenderingMode.AlwaysTemplate), UIControlState.Normal);
             errorButton.TouchUpInside += ErrorButton_TouchUpInside;
 
             _errorIcon = errorButton;
@@ -81,6 +89,7 @@ namespace InterfacesiOS.Views
                     _textField = value;
 
                     StartListeningToTextField();
+                    UpdateFromTextField();
                 }
             }
         }
@@ -264,6 +273,7 @@ namespace InterfacesiOS.Views
 
         private static void ShowErrorPopup(BareUITextField textField)
         {
+            return;
             var errorView = _errorView.Value;
 
             errorView.RemoveAllConstraints();
