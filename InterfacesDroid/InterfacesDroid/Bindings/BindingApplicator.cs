@@ -203,17 +203,23 @@ namespace BareMvvm.Core.Bindings
             BindingExpression bindingExpression,
             IValueConverter converter)
         {
-            PropertyInfo targetProperty;
+            bool oppositeOneWay = false;
+
+            PropertyInfo targetProperty = null;
             if (bindingExpression.Target == "Strikethrough" && bindingExpression.View is TextView tv)
             {
                 targetProperty = typeof(TextViewStrikethroughWrapper).GetProperty(nameof(TextViewStrikethroughWrapper.Strikethrough));
+            }
+            else if (bindingExpression.Target == "HasFocus")
+            {
+                oppositeOneWay = true;
             }
             else
             {
                 targetProperty = bindingExpression.View.GetType().GetProperty(bindingExpression.Target);
             }
 
-            if (targetProperty == null)
+            if (targetProperty == null && !oppositeOneWay)
             {
                 string exMessage = "targetProperty on View could not be found. View: " + bindingExpression.View.GetType() + ". Target: " + bindingExpression.Target;
 
@@ -230,36 +236,43 @@ namespace BareMvvm.Core.Bindings
             {
                 BindingRegistration bindingRegistration = null;
 
-                Action<object> bindingCallback = value =>
+                if (oppositeOneWay)
                 {
-                    try
+                    bindingRegistration = BindingHost.GetEmptyRegistration(bindingExpression.Source);
+                }
+                else
+                {
+                    Action<object> bindingCallback = value =>
                     {
-                        SetTargetProperty(
-                            rawValue: value,
-                            view: bindingExpression.View,
-                            targetProperty,
-                            converter,
-                            bindingExpression.ConverterParameter);
-                    }
-                    catch (Exception ex)
-                    {
+                        try
+                        {
+                            SetTargetProperty(
+                                rawValue: value,
+                                view: bindingExpression.View,
+                                targetProperty,
+                                converter,
+                                bindingExpression.ConverterParameter);
+                        }
+                        catch (Exception ex)
+                        {
                         // View is disposed, should unregister
                         if (ex is TargetInvocationException && ex.InnerException is ObjectDisposedException)
-                        {
+                            {
                             // Note that don't need to call unbind action on the two way view binder since view is already disposed
                             bindingRegistration?.Unregister();
-                        }
-                        else
-                        {
-                            if (Debugger.IsAttached)
+                            }
+                            else
                             {
-                                Debugger.Break();
+                                if (Debugger.IsAttached)
+                                {
+                                    Debugger.Break();
+                                }
                             }
                         }
-                    }
-                };
+                    };
 
-                bindingRegistration = BindingHost.SetBinding(bindingExpression.Source, bindingCallback);
+                    bindingRegistration = BindingHost.SetBinding(bindingExpression.Source, bindingCallback);
+                }
 
                 if (bindingExpression.Mode == BindingMode.TwoWay)
                 {

@@ -43,6 +43,7 @@ using AndroidX.AppCompat.Widget;
 using Google.Android.Material.TextField;
 using Google.Android.Material.CheckBox;
 using Google.Android.Material.RadioButton;
+using Android.Views;
 
 #if __ANDROID__ || MONODROID
 using Android.Widget;
@@ -60,11 +61,16 @@ namespace BareMvvm.Core.Bindings
 
 		public bool TryGetViewBinder(Type viewType, string propertyName, out IViewBinder viewBinder)
 		{
+			if (propertyName == "HasFocus")
+            {
+				viewType = typeof(View);
+            }
+
 			string key = MakeDictionaryKey(viewType, propertyName);
 
 			if (binderDictionary.TryGetValue(key, out viewBinder))
 			{
-					return true;
+				return true;
 			}
 
 			return false;
@@ -133,7 +139,7 @@ namespace BareMvvm.Core.Bindings
 					(view, h) => view.DateChanged += h, (view, h) => view.DateChanged -= h, (view, args) => args) },
 				{MakeDictionaryKey(typeof(MaterialCheckBox), nameof(MaterialCheckBox.Checked)), new ViewEventBinder<MaterialCheckBox, CompoundButton.CheckedChangeEventArgs, bool>(
 					(view, h) => view.CheckedChange += h, (view, h) => view.CheckedChange -= h, (view, args) => args.IsChecked) },
-				{MakeDictionaryKey(typeof(TextInputEditText), nameof(TextInputEditText.HasFocus)), new ViewEventBinder<TextInputEditText, Android.Views.View.FocusChangeEventArgs, bool>(
+				{MakeDictionaryKey(typeof(View), nameof(View.HasFocus)), new ViewEventBinder<View, Android.Views.View.FocusChangeEventArgs, bool>(
 					(view, h) => view.FocusChange += h, (view, h) => view.FocusChange -= h, (view, args) => args.HasFocus) }
 #endif
 			};
