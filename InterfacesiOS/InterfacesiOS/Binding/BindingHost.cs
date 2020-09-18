@@ -36,7 +36,7 @@ namespace InterfacesiOS.Binding
                 textField.Text = text;
             });
 
-            textField.AddTarget(new WeakEventHandler<EventArgs>(delegate
+            EventHandler handler = new WeakEventHandler<EventArgs>(delegate
             {
                 object value;
 
@@ -51,7 +51,11 @@ namespace InterfacesiOS.Binding
 
                 registration.SetSourceValue(value);
 
-            }).Handler, UIControlEvent.EditingChanged);
+            }).Handler;
+
+            // Note that need to listen to EditingDidEnd so that autosuggest corrections are consumed: https://github.com/MvvmCross/MvvmCross/pull/2682
+            textField.AddTarget(handler, UIControlEvent.EditingChanged);
+            textField.AddTarget(handler, UIControlEvent.EditingDidEnd);
         }
 
         /// <summary>

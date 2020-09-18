@@ -10,38 +10,49 @@ namespace InterfacesiOS.Views
         public BareUITextField()
         {
             // Listen to text change and update TextField
-            this.AddTarget(delegate
-            {
-                if (TextField != null)
-                {
-                    try
-                    {
-                        TextField.Text = Text;
-                    }
-                    catch { }
-                }
-            }, UIControlEvent.EditingChanged);
+            // Note that need to listen to EditingDidEnd so that autosuggest corrections are consumed: https://github.com/MvvmCross/MvvmCross/pull/2682
+            this.AddTarget(UpdateTextField, UIControlEvent.EditingChanged);
+            this.AddTarget(UpdateTextField, UIControlEvent.EditingDidEnd);
+
+            this.AddTarget(EndedEditing, UIControlEvent.EditingDidEnd); // This is fired when clicking a different view
+            this.AddTarget(EndedEditing, UIControlEvent.EditingDidEndOnExit); // This is fired when clicking "Done" on keyboard
+            this.AddTarget(StartedEditing, UIControlEvent.EditingDidBegin);
         }
 
-        public override void DidUpdateFocus(UIFocusUpdateContext context, UIFocusAnimationCoordinator coordinator)
+        private void StartedEditing(object sender, EventArgs e)
         {
             if (TextField != null)
             {
                 try
                 {
-                    if (context.NextFocusedView == this)
-                    {
-                        TextField.HasFocus = true;
-                    }
-                    else if (context.PreviouslyFocusedView == this)
-                    {
-                        TextField.HasFocus = false;
-                    }
+                    TextField.HasFocus = true;
                 }
                 catch { }
             }
+        }
 
-            base.DidUpdateFocus(context, coordinator);
+        private void EndedEditing(object sender, EventArgs e)
+        {
+            if (TextField != null)
+            {
+                try
+                {
+                    TextField.HasFocus = false;
+                }
+                catch { }
+            }
+        }
+
+        private void UpdateTextField(object sender, EventArgs e)
+        {
+            if (TextField != null)
+            {
+                try
+                {
+                    TextField.Text = Text;
+                }
+                catch { }
+            }
         }
 
         private static BareUITextField _currentlyShownFieldWithError;
