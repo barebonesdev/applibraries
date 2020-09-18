@@ -1,6 +1,7 @@
 ﻿using System;
 using BareMvvm.Core;
 using CoreGraphics;
+using ToolsPortable;
 using UIKit;
 
 namespace InterfacesiOS.Views
@@ -55,16 +56,6 @@ namespace InterfacesiOS.Views
             }
         }
 
-        private static BareUITextField _currentlyShownFieldWithError;
-
-        private static Lazy<ErrorView> _errorView = new Lazy<ErrorView>(() =>
-        {
-            var errorView = new ErrorView();
-            errorView.Hidden = true;
-            UIApplication.SharedApplication.KeyWindow.AddSubview(errorView);
-            return errorView;
-        });
-
         private UIButton _errorIcon;
 
         private void CreateErrorIcon()
@@ -83,7 +74,7 @@ namespace InterfacesiOS.Views
 
         private void ErrorButton_TouchUpInside(object sender, EventArgs e)
         {
-            ShowErrorPopup(this);
+            ShowErrorPopup();
         }
 
         private bool _listeningToTextField;
@@ -165,86 +156,6 @@ namespace InterfacesiOS.Views
             }
         }
 
-        private class ErrorView : UIView
-        {
-            private UILabel _error;
-
-            public ErrorView()
-            {
-                TranslatesAutoresizingMaskIntoConstraints = false;
-
-                // Create triangle
-                var triangle = new TriangleTop()
-                {
-                    BackgroundColor = UIColor.Clear,
-                    TranslatesAutoresizingMaskIntoConstraints = false
-                };
-                AddSubview(triangle);
-
-                // Create red line
-                var line = new UIView()
-                {
-                    BackgroundColor = UIColor.Red,
-                    TranslatesAutoresizingMaskIntoConstraints = false
-                };
-                AddSubview(line);
-
-                // Create message
-                _error = new UILabel()
-                {
-                    TranslatesAutoresizingMaskIntoConstraints = false,
-                    TextColor = UIColor.White,
-                    Lines = 0,
-                    Font = UIFont.SystemFontOfSize(15),
-                    BackgroundColor = UIColor.Black
-                };
-                _error.SetContentCompressionResistancePriority(250, UILayoutConstraintAxis.Horizontal);
-                AddSubview(_error);
-
-                // Set constraints for triangle
-                triangle.HeightAnchor.ConstraintEqualTo(10).Active = true;
-                triangle.WidthAnchor.ConstraintEqualTo(15).Active = true;
-                triangle.TopAnchor.ConstraintEqualTo(this.TopAnchor, -10).Active = true;
-                triangle.TrailingAnchor.ConstraintEqualTo(this.TrailingAnchor, -15).Active = true;
-
-                // Set constraints for line
-                line.HeightAnchor.ConstraintEqualTo(3).Active = true;
-                line.TopAnchor.ConstraintEqualTo(triangle.BottomAnchor).Active = true;
-                line.LeadingAnchor.ConstraintEqualTo(this.LeadingAnchor).Active = true;
-                line.TrailingAnchor.ConstraintEqualTo(this.TrailingAnchor).Active = true;
-
-                // Set constraints for error label
-                _error.TopAnchor.ConstraintEqualTo(line.BottomAnchor).Active = true;
-                _error.BottomAnchor.ConstraintEqualTo(this.BottomAnchor).Active = true;
-                _error.LeadingAnchor.ConstraintEqualTo(this.LeadingAnchor).Active = true;
-                _error.TrailingAnchor.ConstraintEqualTo(this.TrailingAnchor).Active = true;
-            }
-
-            public string Error
-            {
-                get => _error.Text;
-                set => _error.Text = value;
-            }
-        }
-
-        private class TriangleTop : UIView
-        {
-            public override void Draw(CGRect rect)
-            {
-                using (var context = UIGraphics.GetCurrentContext())
-                {
-                    context.BeginPath();
-                    context.MoveTo(rect.GetMaxX() / 2f, rect.GetMinY());
-                    context.AddLineToPoint(rect.GetMaxX(), rect.GetMaxY());
-                    context.AddLineToPoint(rect.GetMinX() / 2f, rect.GetMaxY());
-                    context.ClosePath();
-
-                    context.SetFillColor(UIColor.Red.CGColor);
-                    context.FillPath();
-                }
-            }
-        }
-
         private string _error;
         public string Error
         {
@@ -265,37 +176,24 @@ namespace InterfacesiOS.Views
 
                         this.RightView = _errorIcon;
                         this.RightViewMode = UITextFieldViewMode.Always;
-                        ShowErrorPopup(this);
                     }
                     else
                     {
                         if (_errorIcon != null)
                         {
                             this.RightView = null;
-                            if (_currentlyShownFieldWithError == this)
-                            {
-                                _errorView.Value.Hidden = true;
-                            }
                         }
                     }
                 }
             }
         }
 
-        private static void ShowErrorPopup(BareUITextField textField)
+        private void ShowErrorPopup()
         {
-            return;
-            var errorView = _errorView.Value;
-
-            errorView.RemoveAllConstraints();
-
-            errorView.WidthAnchor.ConstraintLessThanOrEqualTo(textField.WidthAnchor).Active = true;
-            errorView.TopAnchor.ConstraintEqualTo(textField.BottomAnchor).Active = true;
-            errorView.TrailingAnchor.ConstraintEqualTo(textField.TrailingAnchor).Active = true;
-
-            _currentlyShownFieldWithError = textField;
-            errorView.Error = textField.Error;
-            errorView.Hidden = false;
+            if (Error != null)
+            {
+                new PortableMessageDialog(Error).Show();
+            }
         }
     }
 }

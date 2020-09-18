@@ -60,6 +60,15 @@ namespace InterfacesiOS.Views
             AddCell(cell, invokeAction);
         }
 
+        public void AddTextFieldCell(string title, Binding.BindingHost bindingHost, string bindingValuePropertyName, Action<BareUITextField> customizeTextField = null)
+        {
+            var cell = new BareUITableViewCellWithTextField(UITableViewCellStyle.Value1);
+            cell.TextLabel.Text = title;
+            bindingHost.SetTextFieldBinding(cell.TextField, bindingValuePropertyName);
+
+            customizeTextField?.Invoke(cell.TextField);
+        }
+
         /// <summary>
         /// Two-way binding
         /// </summary>
