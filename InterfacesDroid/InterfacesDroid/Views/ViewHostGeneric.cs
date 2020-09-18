@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -92,7 +93,20 @@ namespace InterfacesDroid.Views
             {
                 await viewModel.LoadAsync();
             }
-            catch { return; }
+            catch
+#if DEBUG
+            (Exception ex)
+#endif
+            {
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                if (Debugger.IsAttached)
+                {
+                    Debugger.Break();
+                }
+#endif
+                return;
+            }
 
             OnViewModelLoadedOverride();
         }
