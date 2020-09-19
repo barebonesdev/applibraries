@@ -143,6 +143,11 @@ namespace InterfacesDroid.Views
             BindingApplicator.BindingHost.SetBinding(dataContextSourcePropertyName, onValueChanged);
         }
 
+        public void SetBinding<T>(string dataContextSourcePropertyName, Action<T> onValueChanged)
+        {
+            BindingApplicator.BindingHost.SetBinding(dataContextSourcePropertyName, onValueChanged);
+        }
+
         private bool _detached;
         protected override void OnDetachedFromWindow()
         {
