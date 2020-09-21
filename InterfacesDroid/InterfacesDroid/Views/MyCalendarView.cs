@@ -13,12 +13,14 @@ using Android.Util;
 using Android.Database;
 using Java.Lang;
 using ToolsPortable;
-using AndroidX.ViewPager.Widget;
+using AndroidX.ViewPager2.Widget;
+using AndroidX.RecyclerView.Widget;
 
 namespace InterfacesDroid.Views
 {
-    public class MyCalendarView : ViewPager
+    public class MyCalendarView : FrameLayout
     {
+        private ViewPager2 _viewPager;
         public event EventHandler DisplayMonthChanged;
         public event EventHandler SelectedDateChanged;
 
@@ -34,14 +36,32 @@ namespace InterfacesDroid.Views
 
         private void Initialize()
         {
-            base.PageSelected += MyCalendarView_PageSelected;
+            _viewPager = new ViewPager2(Context)
+            {
+                OffscreenPageLimit = 1, // This means how many on either side, so 1 is actually 2 total offscreen views
+                LayoutParameters = new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MatchParent,
+                    ViewGroup.LayoutParams.MatchParent)
+            };
+            _viewPager.RegisterOnPageChangeCallback(new PageChangeCallback(this));
+
+            base.AddView(_viewPager);
         }
 
-        private void MyCalendarView_PageSelected(object sender, PageSelectedEventArgs e)
+        private class PageChangeCallback : ViewPager2.OnPageChangeCallback
         {
-            if (Adapter != null)
+            private MyCalendarView _view;
+            public PageChangeCallback(MyCalendarView view)
             {
-                DisplayMonthChanged?.Invoke(this, new EventArgs());
+                _view = view;
+            }
+
+            public override void OnPageSelected(int position)
+            {
+                if (_view.Adapter != null)
+                {
+                    _view.DisplayMonthChanged?.Invoke(this, new EventArgs());
+                }
             }
         }
 
@@ -57,7 +77,7 @@ namespace InterfacesDroid.Views
                     return DateTime.MinValue;
                 }
 
-                return Adapter.GetMonth(this.CurrentItem);
+                return Adapter.GetMonth(_viewPager.CurrentItem);
             }
         }
 
@@ -87,7 +107,7 @@ namespace InterfacesDroid.Views
         }
 
         private CalendarAdapter _adapter;
-        public new CalendarAdapter Adapter
+        public CalendarAdapter Adapter
         {
             get { return _adapter; }
             set
@@ -96,13 +116,13 @@ namespace InterfacesDroid.Views
 
                 if (value != null)
                 {
-                    base.Adapter = new MyCalendarPagerAdapter(value, this);
-                    this.SetCurrentItem(1000, false);
+                    _viewPager.Adapter = new MyCalendarPagerAdapter(value, this);
+                    _viewPager.SetCurrentItem(1000, false);
                 }
 
                 else
                 {
-                    base.Adapter = null;
+                    _viewPager.Adapter = null;
                 }
             }
         }
@@ -140,7 +160,7 @@ namespace InterfacesDroid.Views
             }
         }
 
-        private class MyCalendarPagerAdapter : PagerAdapter
+        private class MyCalendarPagerAdapter : RecyclerView.Adapter
         {
             private CalendarAdapter _calendarAdapter;
             private MyCalendarView _calendarView;
@@ -151,46 +171,19 @@ namespace InterfacesDroid.Views
                 _calendarAdapter = calendarAdapter;
             }
 
-            public override int Count
+            public override int ItemCount => _calendarAdapter.Count;
+
+            public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
             {
-                get
+                if (holder.ItemView is MyCalendarMonthView monthView)
                 {
-                    return _calendarAdapter.Count;
+                    monthView.Month = _calendarAdapter.GetMonth(position);
                 }
             }
-            
-            public override bool IsViewFromObject(View view, Java.Lang.Object objectValue)
+
+            public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)
             {
-                return view == objectValue;
-            }
-
-            public override Java.Lang.Object InstantiateItem(ViewGroup container, int position)
-            {
-                DateTime month = _calendarAdapter.GetMonth(position);
-
-                MyCalendarMonthView monthView;
-                if (_destroyedViews.Count > 0)
-                {
-                    monthView = _destroyedViews.Last();
-                    _destroyedViews.RemoveAt(_destroyedViews.Count - 1);
-                }
-                else
-                {
-                    monthView = _calendarAdapter.GetView(container, _calendarView);
-                    container.AddView(monthView);
-                }
-
-                monthView.Month = month;
-
-                return monthView;
-            }
-
-            private List<MyCalendarMonthView> _destroyedViews = new List<MyCalendarMonthView>();
-
-            public override void DestroyItem(ViewGroup container, int position, Java.Lang.Object objectValue)
-            {
-                var monthView = (MyCalendarMonthView)objectValue;
-                _destroyedViews.Add(monthView);
+                return new GenericRecyclerViewHolder(_calendarAdapter.GetView(parent, _calendarView));
             }
         }
     }
