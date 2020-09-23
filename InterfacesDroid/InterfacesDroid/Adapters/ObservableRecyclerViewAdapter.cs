@@ -262,7 +262,10 @@ namespace InterfacesDroid.Adapters
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debugger.Break();
+                if (System.Diagnostics.Debugger.IsAttached)
+                {
+                    System.Diagnostics.Debugger.Break();
+                }
             }
 #endif
         }

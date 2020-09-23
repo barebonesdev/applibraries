@@ -83,6 +83,11 @@ namespace InterfacesDroid.Views
             get { return _dataContext; }
             set
             {
+                if (value == _dataContext)
+                {
+                    return;
+                }
+
                 object oldValue = _dataContext;
 
                 _dataContext = value;
