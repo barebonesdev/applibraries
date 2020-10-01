@@ -100,6 +100,8 @@
     <Compile Include="Dialogs\CustomColorPickerDialog.cs" />
     <Compile Include="Helpers\AutofillHelper.cs" />
     <Compile Include="Helpers\TextViewHelper.cs" />
+    <Compile Include="Views\BareEditDecimalNumber.cs" />
+    <Compile Include="Views\BareMaterialEditDecimalNumber.cs" />
     <Compile Include="Views\CustomColorPickerView.cs" />
     <Compile Include="Views\GridViewLayout.cs" />
     <Compile Include="Views\IGetSnackbarAnchorView.cs" />
