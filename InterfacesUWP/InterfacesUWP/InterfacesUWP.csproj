@@ -153,7 +153,6 @@
     <Compile Include="Converters\StringToVisibilityConverter.cs" />
     <Compile Include="Converters\TimeSpanToDateTimeConverter.cs" />
     <Compile Include="Converters\TimeSpanToStringConverter.cs" />
-    <Compile Include="CustomControl1.cs" />
     <Compile Include="CustomMessageBox\CustomMessageBox.cs" />
     <Compile Include="CustomMessageBox\CustomMessageBoxBase.cs" />
     <Compile Include="CustomMessageBox\CustomMessageBoxWithContent.cs" />
