@@ -81,7 +81,7 @@ namespace InterfacesiOS.Controllers
                 }
 
                 _viewModel = value;
-                BindingHost.BindingObject = value;
+                BindingHost.DataContext = value;
                 OnViewModelSetOverride();
                 TriggerViewModelLoaded(value);
             }
@@ -294,6 +294,11 @@ namespace InterfacesiOS.Controllers
             textField.StretchWidth(stackView, left: 16, right: 16);
             textField.SetHeight(44);
 
+            RegisterTextField(textField, firstResponder);
+        }
+
+        protected void RegisterTextField(UITextField textField, bool firstResponder = false)
+        {
             if (firstResponder)
             {
                 textField.BecomeFirstResponder();

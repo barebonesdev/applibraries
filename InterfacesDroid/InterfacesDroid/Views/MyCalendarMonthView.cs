@@ -44,7 +44,11 @@ namespace InterfacesDroid.Views
             };
             base.AddView(_linearLayoutContent);
 
-            _linearLayoutContent.AddView(CreateTitle());
+            var titleView = CreateTitle();
+            if (titleView != null)
+            {
+                _linearLayoutContent.AddView(titleView);
+            }
             _linearLayoutContent.AddView(CreateDayHeaders());
 
             _tableLayoutDays = new LinearLayout(Context)

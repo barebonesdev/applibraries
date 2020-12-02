@@ -19,7 +19,10 @@ namespace InterfacesDroid.Adapters
 {
     public abstract class ObservableRecyclerViewAdapter : RecyclerView.Adapter
     {
-        public const int LIST_FOOTER_ITEM_TYPE = 101;
+        public const int LIST_EMPTY_ITEM_TYPE = 101;
+        public const int LIST_FOOTER_ITEM_TYPE = 102;
+
+        private object _emptyObject = new object();
 
         private object _footer;
         /// <summary>
@@ -59,18 +62,20 @@ namespace InterfacesDroid.Adapters
             }
         }
 
+        public Func<ViewGroup, object, RecyclerView.ViewHolder> CreateViewHolderForEmptyList { get; set; }
+
         public Func<ViewGroup, object, RecyclerView.ViewHolder> CreateViewHolderForFooter { get; set; }
 
         private int GetFooterPosition()
         {
-            return GetCountIncludingHeader();
+            return GetCountIncludingEmpty();
         }
 
-        private int GetCountIncludingHeader()
+        private int GetCountIncludingEmpty()
         {
-            if (ItemsSource == null)
+            if (ItemsSource == null || ItemsSource.Count == 0)
             {
-                return 0;
+                return CreateViewHolderForEmptyList != null ? 1 : 0;
             }
 
             return ItemsSource.Count;
@@ -112,11 +117,37 @@ namespace InterfacesDroid.Adapters
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
-                    NotifyItemRangeInserted(e.NewStartingIndex, e.NewItems.Count);
+                    // If list was currently empty and was showing the empty view
+                    if (ItemsSource.Count == e.NewItems.Count && CreateViewHolderForEmptyList != null)
+                    {
+                        NotifyItemRangeChanged(0, 1);
+
+                        if (e.NewItems.Count > 1)
+                        {
+                            NotifyItemRangeInserted(1, e.NewItems.Count - 1);
+                        }
+                    }
+                    else
+                    {
+                        NotifyItemRangeInserted(e.NewStartingIndex, e.NewItems.Count);
+                    }
                     break;
 
                 case NotifyCollectionChangedAction.Remove:
-                    NotifyItemRangeRemoved(e.OldStartingIndex, e.OldItems.Count);
+                    // If removed all items
+                    if (ItemsSource.Count == 0 && CreateViewHolderForEmptyList != null)
+                    {
+                        NotifyItemRangeChanged(0, 1);
+
+                        if (e.OldItems.Count > 1)
+                        {
+                            NotifyItemRangeRemoved(1, e.OldItems.Count - 1);
+                        }
+                    }
+                    else
+                    {
+                        NotifyItemRangeRemoved(e.OldStartingIndex, e.OldItems.Count);
+                    }
                     break;
 
                 case NotifyCollectionChangedAction.Replace:
@@ -126,7 +157,7 @@ namespace InterfacesDroid.Adapters
                 case NotifyCollectionChangedAction.Move:
                     for (int i = 0; i < e.NewItems.Count; i++)
                     {
-                        NotifyItemMoved(e.OldStartingIndex + i, e.NewStartingIndex + 1);
+                        NotifyItemMoved(e.OldStartingIndex + i, e.NewStartingIndex + i);
                     }
                     break;
 
@@ -140,17 +171,22 @@ namespace InterfacesDroid.Adapters
         {
             get
             {
-                int countWithHeader = GetCountIncludingHeader();
+                int countWithEmpty = GetCountIncludingEmpty();
                 if (Footer != null)
                 {
-                    countWithHeader++;
+                    countWithEmpty++;
                 }
-                return countWithHeader;
+                return countWithEmpty;
             }
         }
 
         public object GetItem(int position)
         {
+            if (IsEmptyPosition(position))
+            {
+                return _emptyObject;
+            }
+
             if (ItemsSource != null && position < ItemsSource.Count)
             {
                 return ItemsSource[position];
@@ -173,8 +209,23 @@ namespace InterfacesDroid.Adapters
             return Footer != null && position == GetFooterPosition();
         }
 
+        public bool IsEmptyPosition(int position)
+        {
+            if (CreateViewHolderForEmptyList != null && position == 0 && (ItemsSource == null || ItemsSource.Count == 0))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public override int GetItemViewType(int position)
         {
+            if (IsEmptyPosition(position))
+            {
+                return LIST_EMPTY_ITEM_TYPE;
+            }
+
             if (IsFooterPosition(position))
             {
                 return LIST_FOOTER_ITEM_TYPE;
@@ -211,7 +262,10 @@ namespace InterfacesDroid.Adapters
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debugger.Break();
+                if (System.Diagnostics.Debugger.IsAttached)
+                {
+                    System.Diagnostics.Debugger.Break();
+                }
             }
 #endif
         }
@@ -220,6 +274,19 @@ namespace InterfacesDroid.Adapters
         {
             switch (viewType)
             {
+                case LIST_EMPTY_ITEM_TYPE:
+                    if (CreateViewHolderForEmptyList != null)
+                    {
+                        return CreateViewHolderForEmptyList(parent, _emptyObject);
+                    }
+                    else
+                    {
+                        if (System.Diagnostics.Debugger.IsAttached)
+                        {
+                            System.Diagnostics.Debugger.Break();
+                        }
+                        throw new NotImplementedException("CreateViewHolderForEmptyList wasn't assigned");
+                    }
                 case LIST_FOOTER_ITEM_TYPE:
                     if (CreateViewHolderForFooter != null)
                     {
@@ -227,12 +294,18 @@ namespace InterfacesDroid.Adapters
                     }
                     else
                     {
-                        System.Diagnostics.Debugger.Break();
+                        if (System.Diagnostics.Debugger.IsAttached)
+                        {
+                            System.Diagnostics.Debugger.Break();
+                        }
                         throw new NotImplementedException("CreateViewHolderForFooter wasn't assigned");
                     }
 
                 default:
-                    System.Diagnostics.Debugger.Break();
+                    if (System.Diagnostics.Debugger.IsAttached)
+                    {
+                        System.Diagnostics.Debugger.Break();
+                    }
                     throw new NotImplementedException($"viewType {viewType} was unhandled.");
             }
         }

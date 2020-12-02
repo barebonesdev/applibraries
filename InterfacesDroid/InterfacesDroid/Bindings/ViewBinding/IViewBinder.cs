@@ -39,6 +39,7 @@ using System;
 using View = System.Object;
 #else
 using Android.Views;
+using BareMvvm.Core.Binding;
 #endif
 
 namespace BareMvvm.Core.Bindings
@@ -50,6 +51,6 @@ namespace BareMvvm.Core.Bindings
 	/// </summary>
 	public interface IViewBinder
 	{
-		Action BindView(PropertyBinding binding, object viewModel);
+		Action BindView(BindingExpression bindingExpression, BindingRegistration bindingRegistration, IValueConverter converter);
 	}
 }

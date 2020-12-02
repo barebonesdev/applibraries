@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ToolsPortable.Helpers;
 using Windows.UI.Xaml.Documents;
+using Windows.UI.Xaml.Media;
 
 namespace InterfacesUWP.Helpers
 {
@@ -14,7 +15,7 @@ namespace InterfacesUWP.Helpers
     /// </summary>
     public static class TextToRichInlinesHelper
     {
-        public static IEnumerable<Inline> Convert(string text)
+        public static IEnumerable<Inline> Convert(string text, Brush hyperlinkColor = null)
         {
             var portableRuns = LinkDetectionHelper.DetectRuns(text);
 
@@ -22,7 +23,7 @@ namespace InterfacesUWP.Helpers
             {
                 if (run is PortableHyperlinkRun hl)
                 {
-                    yield return new Hyperlink()
+                    var answer = new Hyperlink()
                     {
                         NavigateUri = hl.Uri,
                         Inlines =
@@ -33,6 +34,13 @@ namespace InterfacesUWP.Helpers
                             }
                         }
                     };
+
+                    if (hyperlinkColor != null)
+                    {
+                        answer.Foreground = hyperlinkColor;
+                    }
+
+                    yield return answer;
                 }
                 else
                 {

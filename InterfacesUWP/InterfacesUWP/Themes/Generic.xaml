@@ -64,20 +64,6 @@
 
     <viewModelPresenters:ViewModelToViewConverter x:Key="ViewModelToViewConverter"/>
 
-    <Style TargetType="local:CustomControl1">
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="local:CustomControl1">
-                    <Border
-                        Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}">
-                    </Border>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
     <Style x:Key="HeaderedGridViewHeaderContainer" TargetType="GridViewItem">
         <Setter Property="FontFamily" Value="{ThemeResource ContentControlThemeFontFamily}"/>
         <Setter Property="FontSize" Value="{ThemeResource ControlContentThemeFontSize}"/>

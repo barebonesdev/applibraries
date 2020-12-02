@@ -17,15 +17,14 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using InterfacesDroid.Bindings.Programmatic;
 using ToolsPortable;
+using BareMvvm.Core.Binding;
 
 namespace InterfacesDroid.Views
 {
     public class InflatedViewWithBinding
         : RelativeLayout, INotifyPropertyChanged
     {
-        private XmlBindingApplicator _bindingApplicator = new XmlBindingApplicator();
-
-        private int _resource;
+        internal readonly BindingApplicator BindingApplicator = new BindingApplicator();
 
         public InflatedViewWithBinding(int resource, ViewGroup root) : base(root.Context)
         {
@@ -33,7 +32,6 @@ namespace InterfacesDroid.Views
             AutofillHelper.DisableForAll(this);
 
             // Issue: Since we place our content in a frame layout, we can't control wrap_content or match_parent from the level below
-            _resource = resource;
             var view = CreateView(LayoutInflater.FromContext(root.Context), resource, this);
             base.AddView(view);
         }
@@ -41,7 +39,6 @@ namespace InterfacesDroid.Views
         public InflatedViewWithBinding(int resource, Context context, IAttributeSet attrs) : base(context, attrs)
         {
             // Issue: Since we place our content in a frame layout, we can't control wrap_content or match_parent from the level below
-            _resource = resource;
             var view = CreateView(LayoutInflater.FromContext(context), resource, this);
             base.AddView(view);
         }
@@ -52,7 +49,6 @@ namespace InterfacesDroid.Views
             AutofillHelper.DisableForAll(this);
 
             // Issue: Since we place our content in a frame layout, we can't control wrap_content or match_parent from the level below
-            _resource = resource;
             var view = CreateView(LayoutInflater.FromContext(context), resource, this);
             base.AddView(view);
         }
@@ -60,73 +56,57 @@ namespace InterfacesDroid.Views
         private View _viewForBinding;
         protected virtual View CreateView(LayoutInflater inflater, int resourceId, ViewGroup root)
         {
-            _viewForBinding = inflater.Inflate(resourceId, root, false); // Setting this to false but including the root ensures that the resource's root layout properties will be respected
-            return _viewForBinding;
+            try
+            {
+                _viewForBinding = inflater.Inflate(resourceId, root, false); // Setting this to false but including the root ensures that the resource's root layout properties will be respected
+                return _viewForBinding;
+            }
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
+            catch (Exception ex)
+#pragma warning restore IDE0059 // Unnecessary assignment of a value
+            {
+                if (Debugger.IsAttached)
+                {
+                    Debugger.Break();
+                }
+
+                throw;
+            }
         }
 
-        private WeakReference _dataContext;
+        private object _dataContext;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         public object DataContext
         {
-            get { return _dataContext?.Target; }
+            get { return _dataContext; }
             set
             {
-                object oldValue = _dataContext?.Target;
-
-                if (_dataContextPropertyChangedHandler != null && oldValue is INotifyPropertyChanged oldValuePropertyChanged)
+                if (value == _dataContext)
                 {
-                    oldValuePropertyChanged.PropertyChanged -= _dataContextPropertyChangedHandler;
+                    return;
                 }
 
-                _bindingApplicator.RemoveBindings();
+                object oldValue = _dataContext;
 
-                if (value != null)
-                {
-                    _dataContext = new WeakReference(value);
-                }
-                else
-                {
-                    _dataContext = null;
-                }
+                _dataContext = value;
 
-                if (value != null && _viewForBinding != null)
+                try
                 {
-                    try
+                    BindingApplicator.BindingHost.DataContext = value;
+
+                    OnDataContextChanged(oldValue, value);
+                }
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
+                catch (Exception ex)
+#pragma warning restore IDE0059 // Unnecessary assignment of a value
+                {
+                    if (Debugger.IsAttached)
                     {
-                        _bindingApplicator.ApplyBindings(_viewForBinding, value, _resource);
-                    }
-
-                    catch (Exception ex)
-                    {
-                        if (Debugger.IsAttached)
-                        {
-                            Console.WriteLine(ex);
-                            Debugger.Break();
-                        }
+                        Debugger.Break();
                     }
                 }
-
-                if (value != null)
-                {
-                    // Start listening to properties if not already and it's wanted
-                    if (_listeningToDataContextProperties && _dataContextPropertyChangedHandler == null)
-                    {
-                        SubscribeToDataContextPropertyChanges();
-                    }
-
-                    // Apply all of the bindings when the data context changes
-                    foreach (var binding in _programmaticBindings)
-                    {
-                        foreach (var action in binding.Value)
-                        {
-                            ExecuteBinding(binding.Key, action);
-                        }
-                    }
-                }
-
-                OnDataContextChanged(oldValue, value);
             }
         }
 
@@ -163,82 +143,48 @@ namespace InterfacesDroid.Views
             });
         }
 
-        private Dictionary<string, List<Action>> _programmaticBindings = new Dictionary<string, List<Action>>();
-
         public void SetBinding(string dataContextSourcePropertyName, Action onValueChanged)
         {
-            List<Action> actions;
-            if (!_programmaticBindings.TryGetValue(dataContextSourcePropertyName, out actions))
-            {
-                actions = new List<Action>();
-                _programmaticBindings[dataContextSourcePropertyName] = actions;
-            }
-
-            actions.Add(onValueChanged);
-
-            EnableListeningToDataContextProperties();
-
-            if (DataContext != null)
-            {
-                ExecuteBinding(dataContextSourcePropertyName, onValueChanged);
-            }
+            BindingApplicator.BindingHost.SetBinding(dataContextSourcePropertyName, onValueChanged);
         }
 
-        private PropertyChangedEventHandler _dataContextPropertyChangedHandler;
-        private bool _listeningToDataContextProperties = false;
-        private void EnableListeningToDataContextProperties()
+        public void SetBinding<T>(string dataContextSourcePropertyName, Action<T> onValueChanged)
         {
-            if (_listeningToDataContextProperties)
-            {
-                return;
-            }
-
-            _listeningToDataContextProperties = true;
-
-            SubscribeToDataContextPropertyChanges();
+            BindingApplicator.BindingHost.SetBinding(dataContextSourcePropertyName, onValueChanged);
         }
 
-        private void SubscribeToDataContextPropertyChanges()
+        private bool _detached;
+        protected override void OnDetachedFromWindow()
         {
-            if (DataContext is INotifyPropertyChanged dataContext)
+            // We do NOT call the unregister methods since the view might become attached again (RecyclerView scenarios)...
+            // and the applicator's unregister unwires the view listeners and all bindings... we just need to detach from the
+            // data context, which is what the Detach method does. If DataContext is set again later, 
+            BindingApplicator.BindingHost.Detach();
+            _detached = true;
+
+            base.OnDetachedFromWindow();
+        }
+
+        protected override void OnAttachedToWindow()
+        {
+            // Ensure data context is set if we detached and then re-attached
+            if (_detached)
             {
-                if (_dataContextPropertyChangedHandler == null)
+                if (DataContext != null)
                 {
-                    _dataContextPropertyChangedHandler = new WeakEventHandler<PropertyChangedEventArgs>(DataContext_PropertyChanged).Handler;
+                    // Note that if DataContext is already equal to this, it no-ops
+                    BindingApplicator.BindingHost.DataContext = DataContext;
                 }
 
-                dataContext.PropertyChanged += _dataContextPropertyChangedHandler;
+                _detached = false;
             }
-        }
 
-        private void DataContext_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (_programmaticBindings.TryGetValue(e.PropertyName, out List<Action> actions))
-            {
-                foreach (var action in actions)
-                {
-                    ExecuteBinding(e.PropertyName, action);
-                }
-            }
-        }
-
-        private void ExecuteBinding(string sourceDataContextPropertyName, Action onValueChanged)
-        {
-            try
-            {
-                onValueChanged();
-            }
-            catch (Exception ex)
-            {
-#if DEBUG
-                System.Diagnostics.Debugger.Break();
-#endif
-            }
+            base.OnAttachedToWindow();
         }
 
         ~InflatedViewWithBinding()
         {
-            _bindingApplicator.RemoveBindings();
+            BindingApplicator.Unregister();
         }
 
         protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName]string propertyName = null)

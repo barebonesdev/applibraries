@@ -34,61 +34,268 @@
 */
 #endregion
 
-using Android.Content.Res;
-using Android.Views;
-using Android.Widget;
-using AndroidX.Core.View;
-using InterfacesDroid.Helpers;
+#if __ANDROID__
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Globalization;
-using System.Reflection;
-using System.Windows.Input;
+using Android.Content;
+using Android.Views;
+using Exception = System.Exception;
+using Android.Widget;
 using ToolsPortable;
+using System.Reflection;
+using BareMvvm.Core.Binding;
+using Android.Content.Res;
+using AndroidX.Core.View;
+using System.Globalization;
+using InterfacesDroid.Helpers;
 
 namespace BareMvvm.Core.Bindings
 {
-    internal class BindingApplicator
+    internal class ApplicationContextHolder
     {
-#if __ANDROID__
-        const string viewEnabledPropertyName = nameof(Android.Views.View.Enabled);
-#else
-		/* The Enabled property name assumes that there is a property on the view 
-		 * that can be used to set the enabled state of the view. */
-		const string viewEnabledPropertyName = "Enabled";
+        internal static Context Context { get; set; }
+    }
+
+    /// <summary>
+    /// See http://www.codeproject.com/Articles/1070662/Data-Binding-in-Xamarin-Android for documentation.
+    /// </summary>
+	public class BindingApplicator
+    {
+        private static readonly ViewBinderRegistry ViewBinderRegistry = new ViewBinderRegistry();
+        public BindingHost BindingHost { get; private set; } = new BindingHost();
+
+        private static readonly List<Assembly> _assembliesThatNeedProcessing = new List<Assembly>()
+        {
+            // Include this assembly as it has several converters
+            Assembly.GetExecutingAssembly()
+        };
+
+#if DEBUG
+        private static readonly List<Assembly> _processedAssemblies = new List<Assembly>();
 #endif
 
-        internal static ViewBinderRegistry ViewBinderRegistry { get; } = new ViewBinderRegistry();
-
-        public void ApplyBinding(
-            BindingExpression bindingExpression,
-            object activity,
-            string dataContextPropertyOnActivity,
-            IValueConverter converter,
-            List<Action> unbindActions)
+        /// <summary>
+        /// Registers the assembly calling this method as an assembly that'll be searched for type converters
+        /// </summary>
+        public static void RegisterThisAssembly()
         {
-            PropertyInfo targetProperty = bindingExpression.View.GetType().GetProperty(bindingExpression.Target);
+            RegisterAssembly(Assembly.GetCallingAssembly());
+        }
 
-            if (targetProperty == null)
-                throw new NullReferenceException("targetProperty on View could not be found. View: " + bindingExpression.View.GetType() + ". Target: " + bindingExpression.Target);
-
-            if (!TryHandleLocalizationBinding(bindingExpression, targetProperty, converter))
+        /// <summary>
+        /// Registers the specified assembly as a type converter source
+        /// </summary>
+        /// <param name="assembly"></param>
+        public static void RegisterAssembly(Assembly assembly)
+        {
+#if DEBUG
+            // We only do this check in debug, since assuming in release we already would have seen the issue in debug
+            if (_processedAssemblies.Contains(assembly))
             {
-                string sourcePath = string.IsNullOrWhiteSpace(dataContextPropertyOnActivity)
-                    ? bindingExpression.Source
-                    : dataContextPropertyOnActivity + "." + bindingExpression.Source;
+                Debugger.Break();
+                throw new InvalidOperationException("Assembly cannot be registered twice");
+            }
+#endif
 
-                string[] pathSplit = sourcePath.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
-
-                var localRemoveActions = new List<Action>();
-
-                Bind(bindingExpression, activity, pathSplit, converter, targetProperty, localRemoveActions, unbindActions, 0);
+            if (!_assembliesThatNeedProcessing.Contains(assembly))
+            {
+                _assembliesThatNeedProcessing.Add(assembly);
             }
         }
 
-        private bool TryHandleLocalizationBinding(BindingExpression bindingExpression, PropertyInfo targetProperty, IValueConverter converter)
+        private static Dictionary<string, Type> _valueConverterTypes = new Dictionary<string, Type>();
+
+        private static Dictionary<string, Type> GetValueConverterTypes()
+        {
+            if (_assembliesThatNeedProcessing.Count > 0)
+            {
+                foreach (var assembly in _assembliesThatNeedProcessing)
+                {
+                    foreach (var type in TypeUtility.GetTypes<IValueConverter>(assembly))
+                    {
+#if DEBUG
+                        if (_valueConverterTypes.ContainsKey(type.Name))
+                        {
+                            // Alert about overwriting type
+                            Debugger.Break();
+                        }
+#endif
+
+                        _valueConverterTypes[type.Name] = type;
+                    }
+
+#if DEBUG
+                    _processedAssemblies.Add(assembly);
+#endif
+                }
+
+                _assembliesThatNeedProcessing.Clear();
+            }
+
+            return _valueConverterTypes;
+        }
+
+        private static Type GetValueConverter(string valueConverterName)
+        {
+            if (GetValueConverterTypes().TryGetValue(valueConverterName, out Type valueConverterType))
+            {
+                return valueConverterType;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private List<Action> _unbindActions = new List<Action>();
+
+        public void Unregister()
+        {
+            foreach (var action in _unbindActions)
+            {
+                try
+                {
+                    action();
+                }
+                catch { }
+            }
+
+            BindingHost.Unregister();
+        }
+
+        public void ApplyBindings(View view, List<BindingExpression> bindingExpressions)
+        {
+            foreach (var bindingInfo in bindingExpressions)
+            {
+                IValueConverter valueConverter = null;
+                string valueConverterName = bindingInfo.Converter;
+
+                if (!string.IsNullOrWhiteSpace(valueConverterName))
+                {
+                    var converterType = GetValueConverter(valueConverterName);
+                    if (converterType != null)
+                    {
+                        var constructor = converterType.GetConstructor(Type.EmptyTypes);
+                        if (constructor != null)
+                        {
+                            valueConverter = constructor.Invoke(null) as IValueConverter;
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException(
+                                $"Value converter {valueConverterName} needs "
+                                + "an empty constructor to be instanciated.");
+                        }
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(
+                            $"There is no converter named {valueConverterName}.");
+                    }
+                }
+
+                ApplyBinding(bindingInfo, valueConverter);
+            }
+        }
+
+        private void ApplyBinding(
+            BindingExpression bindingExpression,
+            IValueConverter converter)
+        {
+            bool oppositeOneWay = false;
+
+            PropertyInfo targetProperty = null;
+            if (bindingExpression.Target == "Strikethrough" && bindingExpression.View is TextView tv)
+            {
+                targetProperty = typeof(TextViewStrikethroughWrapper).GetProperty(nameof(TextViewStrikethroughWrapper.Strikethrough));
+            }
+            else if (bindingExpression.Target == "HasFocus")
+            {
+                oppositeOneWay = true;
+            }
+            else
+            {
+                targetProperty = bindingExpression.View.GetType().GetProperty(bindingExpression.Target);
+            }
+
+            if (targetProperty == null && !oppositeOneWay)
+            {
+                string exMessage = "targetProperty on View could not be found. View: " + bindingExpression.View.GetType() + ". Target: " + bindingExpression.Target;
+
+                if (Debugger.IsAttached)
+                {
+                    Debugger.Break();
+                }
+
+                throw new KeyNotFoundException(exMessage);
+            }
+
+            // We try localizing, otherwise we bind
+            if (!TryHandleLocalizationBinding(bindingExpression, targetProperty, converter))
+            {
+                BindingRegistration bindingRegistration = null;
+
+                if (oppositeOneWay)
+                {
+                    bindingRegistration = BindingHost.GetEmptyRegistration(bindingExpression.Source);
+                }
+                else
+                {
+                    Action<object> bindingCallback = value =>
+                    {
+                        try
+                        {
+                            SetTargetProperty(
+                                rawValue: value,
+                                view: bindingExpression.View,
+                                targetProperty,
+                                converter,
+                                bindingExpression.ConverterParameter);
+                        }
+                        catch (Exception ex)
+                        {
+                        // View is disposed, should unregister
+                        if (ex is TargetInvocationException && ex.InnerException is ObjectDisposedException)
+                            {
+                            // Note that don't need to call unbind action on the two way view binder since view is already disposed
+                            bindingRegistration?.Unregister();
+                            }
+                            else
+                            {
+                                if (Debugger.IsAttached)
+                                {
+                                    Debugger.Break();
+                                }
+                            }
+                        }
+                    };
+
+                    bindingRegistration = BindingHost.SetBinding(bindingExpression.Source, bindingCallback);
+                }
+
+                if (bindingExpression.Mode == BindingMode.TwoWay)
+                {
+                    if (ViewBinderRegistry.TryGetViewBinder(bindingExpression.View.GetType(), bindingExpression.Target, out IViewBinder binder))
+                    {
+                        var unbindAction = binder.BindView(bindingExpression, bindingRegistration, converter);
+                        if (unbindAction != null)
+                        {
+                            _unbindActions.Add(unbindAction);
+                        }
+                    }
+                    else
+                    {
+                        if (Debugger.IsAttached)
+                        {
+                            Debugger.Break();
+                        }
+                    }
+                }
+            }
+        }
+
+        private static bool TryHandleLocalizationBinding(BindingExpression bindingExpression, PropertyInfo targetProperty, IValueConverter converter)
         {
             if (bindingExpression.Source.StartsWith("@"))
             {
@@ -103,421 +310,7 @@ namespace BareMvvm.Core.Bindings
             return false;
         }
 
-        private class TextViewStrikethroughWrapper
-        {
-            private TextView _tv;
-            public TextViewStrikethroughWrapper(TextView tv)
-            {
-                _tv = tv;
-            }
-
-            public bool Strikethrough
-            {
-                get { return _tv.GetStrikethrough(); }
-                set { _tv.SetStrikethrough(value); }
-            }
-        }
-
-        public void ApplyBinding(
-            BindingExpression bindingExpression,
-            object dataContext,
-            IValueConverter converter,
-            List<Action> unbindActions)
-        {
-            PropertyInfo targetProperty;
-            if (bindingExpression.Target == "Strikethrough" && bindingExpression.View is TextView tv)
-            {
-                targetProperty = typeof(TextViewStrikethroughWrapper).GetProperty(nameof(TextViewStrikethroughWrapper.Strikethrough));
-            }
-            else
-            {
-                targetProperty = bindingExpression.View.GetType().GetProperty(bindingExpression.Target);
-            }
-
-            if (targetProperty == null)
-                throw new NullReferenceException("targetProperty on View could not be found. View: " + bindingExpression.View.GetType() + ". Target: " + bindingExpression.Target + ". This might be because the XML doesn't always match up one-to-one with the generated views, if you add an ID to the xml item you're binding, that'll ensure it can be found.");
-
-            if (!TryHandleLocalizationBinding(bindingExpression, targetProperty, converter))
-            {
-                string sourcePath = bindingExpression.Source;
-
-                string[] pathSplit = sourcePath.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
-
-                var localRemoveActions = new List<Action>();
-
-                Bind(bindingExpression, dataContext, pathSplit, converter, targetProperty, localRemoveActions, unbindActions, 0);
-            }
-        }
-
-        void Bind(
-            BindingExpression bindingExpression,
-            object dataContext,
-            string[] sourcePath,
-            IValueConverter converter,
-            PropertyInfo targetProperty,
-            IList<Action> localRemoveActions,
-            IList<Action> globalRemoveActions,
-            int position)
-        {
-            object currentContext = dataContext;
-
-            var pathSplitLength = sourcePath.Length;
-            int lastIndex = pathSplitLength - 1;
-            PropertyBinding[] propertyBinding = new PropertyBinding[1];
-
-            if (pathSplitLength == 0)
-            {
-                // If the source is the data context itself
-
-                // then set the target property
-                SetTargetProperty(currentContext, bindingExpression.View,
-                    targetProperty, converter, bindingExpression.ConverterParameter);
-
-                // The following loop won't execute
-            }
-
-            for (int i = position; i < pathSplitLength; i++)
-            {
-                if (currentContext == null)
-                {
-                    break;
-                }
-
-                var inpc = currentContext as INotifyPropertyChanged;
-
-                string sourceSegment = sourcePath[i];
-                var sourceProperty = currentContext.GetType().GetProperty(sourceSegment);
-
-                if (i == lastIndex) /* The value. */
-                {
-                    /* Add a property binding between the source (the viewmodel) 
-					 * and the target (the view) so we can update the target property 
-					 * when the source property changes (a OneWay binding). */
-                    propertyBinding[0] = new PropertyBinding
-                    {
-                        SourceProperty = sourceProperty,
-                        TargetProperty = targetProperty,
-                        Converter = converter,
-                        ConverterParameter = bindingExpression.ConverterParameter,
-                        View = bindingExpression.View
-                    };
-
-                    {
-                        /* When this value changes, the value must be pushed to the target. */
-
-                        if (inpc != null && bindingExpression.Mode != BindingMode.OneTime)
-                        {
-                            WeakReference contextReference = new WeakReference(currentContext);
-
-                            // First have to declare the property, so we can use it inside the delegate
-                            PropertyChangedEventHandler handler = null;
-                            handler = new WeakEventHandler<PropertyChangedEventArgs>(delegate (object sender, PropertyChangedEventArgs args)
-                            {
-                                if (args.PropertyName != sourceSegment)
-                                {
-                                    return;
-                                }
-
-                                PropertyBinding binding = propertyBinding[0];
-
-                                if (binding != null && binding.View != null)
-                                {
-                                    if (binding.PreventUpdateForTargetProperty)
-                                    {
-                                        return;
-                                    }
-
-                                    try
-                                    {
-                                        binding.PreventUpdateForSourceProperty = true;
-
-                                        object context = contextReference.Target;
-
-                                        if (context != null)
-                                            SetTargetProperty(sourceProperty, context,
-                                                binding.View, binding.TargetProperty,
-                                                binding.Converter, binding.ConverterParameter);
-                                    }
-                                    catch (Exception ex) when (ex is System.ObjectDisposedException || ex is System.Reflection.TargetInvocationException)
-                                    {
-                                        // If disposed, we should unregister
-                                        inpc.PropertyChanged -= handler;
-                                    }
-                                    finally
-                                    {
-                                        binding.PreventUpdateForSourceProperty = false;
-                                    }
-                                }
-                            }).Handler;
-
-                            inpc.PropertyChanged += handler;
-                            WeakReference<INotifyPropertyChanged> inpcReference = new WeakReference<INotifyPropertyChanged>(inpc);
-
-                            Action removeHandler = () =>
-                            {
-                                INotifyPropertyChanged referencedInpc;
-                                inpcReference.TryGetTarget(out referencedInpc);
-                                if (referencedInpc != null)
-                                {
-                                    referencedInpc.PropertyChanged -= handler;
-                                }
-
-                                propertyBinding[0] = null;
-                            };
-
-                            localRemoveActions.Add(removeHandler);
-                            globalRemoveActions.Add(removeHandler);
-                        }
-                    }
-
-                    /* Determine if the target is an event, 
-					 * in which case use that to trigger an update. */
-
-                    var bindingEvent = bindingExpression.View.GetType().GetEvent(bindingExpression.Target);
-
-                    if (bindingEvent != null)
-                    {
-                        /* The target is an event of the view. */
-                        if (sourceProperty != null)
-                        {
-                            /* The source must be an ICommand so we can call its Execute method. */
-                            var command = sourceProperty.GetValue(currentContext) as ICommand;
-                            if (command == null)
-                            {
-                                throw new InvalidOperationException(
-                                    $"The source property {bindingExpression.Source}, "
-                                    + $"bound to the event {bindingEvent.Name}, "
-                                    + "needs to implement the interface ICommand.");
-                            }
-
-                            /* Subscribe to the specified event to execute 
-							 * the command when the event is raised. */
-                            var executeMethodInfo = typeof(ICommand).GetMethod(nameof(ICommand.Execute), new[] { typeof(object) });
-
-                            Action action = () =>
-                            {
-                                executeMethodInfo.Invoke(command, new object[] { null });
-                            };
-
-                            Action removeAction = DelegateUtility.AddHandler(bindingExpression.View, bindingExpression.Target, action);
-                            localRemoveActions.Add(removeAction);
-                            globalRemoveActions.Add(removeAction);
-
-                            /* Subscribe to the CanExecuteChanged event of the command 
-							 * to disable or enable the view associated to the command. */
-                            var view = bindingExpression.View;
-
-                            var enabledProperty = view.GetType().GetProperty(viewEnabledPropertyName);
-                            if (enabledProperty != null)
-                            {
-                                enabledProperty.SetValue(view, command.CanExecute(null));
-
-                                Action canExecuteChangedAction = () => enabledProperty.SetValue(view, command.CanExecute(null));
-                                removeAction = DelegateUtility.AddHandler(
-                                    command, nameof(ICommand.CanExecuteChanged), canExecuteChangedAction);
-
-                                localRemoveActions.Add(removeAction);
-                                globalRemoveActions.Add(removeAction);
-                            }
-                        }
-                        else /* sourceProperty == null */
-                        {
-                            /* If the Source property of the data context 
-							 * is not a property, check if it's a method. */
-                            var sourceMethod = currentContext.GetType().GetMethod(sourceSegment,
-                                BindingFlags.Public | BindingFlags.NonPublic
-                                | BindingFlags.Instance | BindingFlags.Static);
-
-                            if (sourceMethod == null)
-                            {
-                                throw new InvalidOperationException(
-                                    $"No property or event named {bindingExpression.Source} "
-                                    + $"found to bind it to the event {bindingEvent.Name}.");
-                            }
-
-                            var parameterCount = sourceMethod.GetParameters().Length;
-                            if (parameterCount > 1)
-                            {
-                                /* Only calls to methods without parameters are supported. */
-                                throw new InvalidOperationException(
-                                    $"Method {sourceMethod.Name} should not have zero or one parameter "
-                                    + $"to be called when event {bindingEvent.Name} is raised.");
-                            }
-
-                            /* It's a method therefore subscribe to the specified event 
-							 * to execute the method when event is raised. */
-                            var context = currentContext;
-                            Action removeAction = DelegateUtility.AddHandler(
-                                bindingExpression.View,
-                                bindingExpression.Target,
-                                () => { sourceMethod.Invoke(context, parameterCount > 0 ? new[] { context } : null); });
-
-                            localRemoveActions.Add(removeAction);
-                            globalRemoveActions.Add(removeAction);
-                        }
-                    }
-                    else /* bindingEvent == null */
-                    {
-                        if (sourceProperty == null)
-                        {
-                            throw new InvalidOperationException(
-                                $"Source property {bindingExpression.Source} does not exist "
-                                + $"on {currentContext?.GetType().Name ?? "null"}.");
-                        }
-
-                        /* Set initial binding value. */
-                        SetTargetProperty(sourceProperty, currentContext, bindingExpression.View,
-                            targetProperty, converter, bindingExpression.ConverterParameter);
-
-                        if (bindingExpression.Mode == BindingMode.TwoWay)
-                        {
-                            /* TwoWay bindings require that the ViewModel property be updated 
-							 * when an event is raised on the bound view. */
-                            string changedEvent = bindingExpression.ViewValueChangedEvent;
-                            if (!string.IsNullOrWhiteSpace(changedEvent))
-                            {
-                                var context = currentContext;
-
-                                Action changeAction = () =>
-                                {
-                                    var pb = propertyBinding[0];
-                                    if (pb == null)
-                                    {
-                                        return;
-                                    }
-
-                                    ViewValueChangedHandler.HandleViewValueChanged(pb, context);
-                                };
-
-                                var view = bindingExpression.View;
-                                var removeHandler = DelegateUtility.AddHandler(view, changedEvent, changeAction);
-
-                                localRemoveActions.Add(removeHandler);
-                                globalRemoveActions.Add(removeHandler);
-                            }
-                            else
-                            {
-                                var binding = propertyBinding[0];
-                                IViewBinder binder;
-                                if (ViewBinderRegistry.TryGetViewBinder(
-                                        binding.View.GetType(), binding.TargetProperty.Name, out binder))
-                                {
-                                    var unbindAction = binder.BindView(binding, currentContext);
-                                    if (unbindAction != null)
-                                    {
-                                        localRemoveActions.Add(unbindAction);
-                                        globalRemoveActions.Add(unbindAction);
-                                    }
-                                }
-                                else
-                                {
-                                    if (Debugger.IsAttached)
-                                    {
-                                        Debugger.Break();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    /* The source is a child of another object, 
-					 * therefore we must subscribe to the parents PropertyChanged event 
-					 * and re-bind when the child changes. */
-
-                    if (inpc != null && bindingExpression.Mode != BindingMode.OneTime)
-                    {
-                        WeakReference contextReference = new WeakReference(currentContext);
-
-                        var iCopy = i;
-
-                        PropertyChangedEventHandler handler
-                            = new WeakEventHandler<PropertyChangedEventArgs>(delegate (object sender, PropertyChangedEventArgs args)
-                        {
-                            if (args.PropertyName != sourceSegment)
-                            {
-                                return;
-                            }
-
-                            /* Remove existing child event subscribers. */
-                            for (int j = position; j < localRemoveActions.Count; j++)
-                            {
-                                var removeAction = localRemoveActions[j];
-                                try
-                                {
-                                    removeAction();
-                                }
-                                catch
-                                {
-                                    /* TODO: log error. */
-                                }
-
-                                localRemoveActions.Remove(removeAction);
-                                globalRemoveActions.Remove(removeAction);
-                            }
-
-                            propertyBinding[0] = null;
-
-                            /* Bind child bindings. */
-                            object context = contextReference.Target;
-                            if (context != null)
-                            {
-                                Bind(bindingExpression,
-                                    context,
-                                    sourcePath,
-                                    converter,
-                                    targetProperty,
-                                    localRemoveActions, globalRemoveActions, iCopy);
-                            }
-                        }).Handler;
-
-                        inpc.PropertyChanged += handler;
-
-                        WeakReference<INotifyPropertyChanged> inpcReference = new WeakReference<INotifyPropertyChanged>(inpc);
-
-                        Action removeHandler = () =>
-                        {
-                            INotifyPropertyChanged referencedInpc;
-                            inpcReference.TryGetTarget(out referencedInpc);
-                            if (referencedInpc != null)
-                            {
-                                referencedInpc.PropertyChanged -= handler;
-                            }
-
-                            propertyBinding[0] = null;
-                        };
-
-                        localRemoveActions.Add(removeHandler);
-                        globalRemoveActions.Add(removeHandler);
-                    }
-
-                    currentContext = sourceProperty?.GetValue(currentContext);
-                }
-            }
-        }
-
-        static void SetTargetProperty(PropertyInfo sourceProperty, object dataContext,
-            object view, PropertyInfo targetProperty, IValueConverter converter, string converterParameter)
-        {
-            try
-            {
-                if (sourceProperty == null)
-                    throw new ArgumentNullException(nameof(sourceProperty));
-
-                /* Get the value of the source (the viewmodel) 
-                 * property by using the converter if provided. */
-                var rawValue = sourceProperty.GetValue(dataContext);
-
-                SetTargetProperty(rawValue, view, targetProperty, converter, converterParameter);
-            }
-            catch (ArgumentException ex)
-            {
-                throw new Exception("Setting property error. View: " + view.GetType() + ". Target: " + targetProperty.Name + ". CanWrite: " + targetProperty.CanWrite, ex);
-            }
-        }
-
-        internal static void SetTargetProperty(object rawValue,
+        public static void SetTargetProperty(object rawValue,
             object view, PropertyInfo targetProperty, IValueConverter converter, string converterParameter)
         {
             try
@@ -588,6 +381,10 @@ namespace BareMvvm.Core.Bindings
                         // which makes no sense. So I'll just catch it.
                     }
                 }
+                else if (targetProperty.Name == nameof(View.HasFocus))
+                {
+                    // Don't do anything, these are only one-way where the viewmodel updates but the view never updates
+                }
                 else
                 {
                     targetProperty.SetValue(view, sourcePropertyValue);
@@ -598,5 +395,21 @@ namespace BareMvvm.Core.Bindings
                 throw new Exception("Setting property error. View: " + view.GetType() + ". Target: " + targetProperty.Name + ". CanWrite: " + targetProperty.CanWrite, ex);
             }
         }
+
+        private class TextViewStrikethroughWrapper
+        {
+            private TextView _tv;
+            public TextViewStrikethroughWrapper(TextView tv)
+            {
+                _tv = tv;
+            }
+
+            public bool Strikethrough
+            {
+                get => _tv.GetStrikethrough();
+                set => _tv.SetStrikethrough(value);
+            }
+        }
     }
 }
+#endif

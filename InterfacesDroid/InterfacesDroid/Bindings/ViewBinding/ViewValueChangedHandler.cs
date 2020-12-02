@@ -34,6 +34,7 @@
 */
 #endregion
 
+using BareMvvm.Core.Binding;
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -43,37 +44,11 @@ namespace BareMvvm.Core.Bindings
 {
     internal class ViewValueChangedHandler
     {
-        internal static void HandleViewValueChanged(
-            PropertyBinding propertyBinding,
-            object dataContext)
-        {
-            try
-            {
-                propertyBinding.PreventUpdateForTargetProperty = true;
-
-                var newValue = propertyBinding.TargetProperty.GetValue(propertyBinding.View);
-
-                UpdateSourceProperty(propertyBinding.SourceProperty, dataContext, newValue,
-                    propertyBinding.Converter, propertyBinding.ConverterParameter);
-            }
-            catch (Exception)
-            {
-                /* TODO: log exception */
-                if (Debugger.IsAttached)
-                {
-                    Debugger.Break();
-                }
-            }
-            finally
-            {
-                propertyBinding.PreventUpdateForTargetProperty = false;
-            }
-        }
-
         internal static void HandleViewValueChanged<TView, TArgs, TNewValue>(
-            PropertyBinding propertyBinding,
+            BindingExpression bindingExpression,
             Func<TView, TArgs, TNewValue> newValueFunc,
-            object dataContext,
+            BindingRegistration bindingRegistration,
+            IValueConverter converter,
             TArgs args)
 #if __ANDROID__ || MONODROID
             where TView : Android.Views.View
@@ -81,16 +56,19 @@ namespace BareMvvm.Core.Bindings
         {
             try
             {
-                propertyBinding.PreventUpdateForTargetProperty = true;
-                var rawValue = newValueFunc((TView)propertyBinding.View, args);
+                var rawValue = newValueFunc((TView)bindingExpression.View, args);
 
-                UpdateSourceProperty(propertyBinding.SourceProperty,
-                    dataContext,
+                UpdateSourceProperty(
+                    bindingExpression,
+                    bindingRegistration,
                     rawValue,
-                    propertyBinding.Converter,
-                    propertyBinding.ConverterParameter);
+                    converter,
+                    bindingExpression.ConverterParameter);
             }
             catch
+#if DEBUG
+            (Exception ex)
+#endif
             {
                 /* TODO: log exception */
                 if (Debugger.IsAttached)
@@ -98,32 +76,33 @@ namespace BareMvvm.Core.Bindings
                     Debugger.Break();
                 }
             }
-            finally
-            {
-                propertyBinding.PreventUpdateForTargetProperty = false;
-            }
         }
 
         internal static void UpdateSourceProperty<T>(
-            PropertyInfo sourceProperty,
-            object dataContext,
+            BindingExpression bindingExpression,
+            BindingRegistration bindingRegistration,
             T value,
             IValueConverter valueConverter,
             string converterParameter)
         {
             object newValue;
+            var sourceProperty = bindingRegistration.GetSourceProperty();
+            if (sourceProperty == null)
+            {
+                return;
+            }
 
             if (valueConverter != null)
             {
                 newValue = valueConverter.ConvertBack(value,
-                    sourceProperty.PropertyType,
+                    sourceProperty.PropertyInfo.PropertyType,
                     converterParameter,
                     CultureInfo.CurrentCulture);
             }
             else
             {
                 // Implicit converter logic for DoubleToString round trip
-                if (sourceProperty.PropertyType == typeof(double)
+                if (sourceProperty.PropertyInfo.PropertyType == typeof(double)
                     && value is string)
                 {
                     double valueAsDouble;
@@ -144,7 +123,22 @@ namespace BareMvvm.Core.Bindings
                 }
             }
 
-            sourceProperty.SetValue(dataContext, newValue);
+            try
+            {
+                // Must set through binding registration so that it'll correctly ignore property change events from just being set
+                bindingRegistration.SetSourceValue(newValue, preObtainedSourceProperty: sourceProperty);
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                if (Debugger.IsAttached)
+                {
+                    Debugger.Break();
+                }
+#endif
+
+                throw ex;
+            }
         }
     }
 }

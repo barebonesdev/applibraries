@@ -83,7 +83,7 @@ namespace InterfacesiOS.Views
                 }
 
                 _dataContext = value;
-                BindingHost.BindingObject = value;
+                BindingHost.DataContext = value;
 
                 OnDataContextChanged();
             }

@@ -60,6 +60,15 @@ namespace InterfacesiOS.Views
             AddCell(cell, invokeAction);
         }
 
+        public void AddTextFieldCell(string title, Binding.BindingHost bindingHost, string bindingValuePropertyName, Action<BareUITextField> customizeTextField = null)
+        {
+            var cell = new BareUITableViewCellWithTextField(UITableViewCellStyle.Value1);
+            cell.TextLabel.Text = title;
+            bindingHost.SetTextFieldBinding(cell.TextField, bindingValuePropertyName);
+
+            customizeTextField?.Invoke(cell.TextField);
+        }
+
         /// <summary>
         /// Two-way binding
         /// </summary>
@@ -78,9 +87,9 @@ namespace InterfacesiOS.Views
             {
                 try
                 {
-                    var type = bindingHost.BindingObject.GetType();
+                    var type = bindingHost.DataContext.GetType();
                     var prop = type.GetProperty(bindingValuePropertyName);
-                    prop.SetValue(bindingHost.BindingObject, true);
+                    prop.SetValue(bindingHost.DataContext, true);
                 }
                 catch { }
             });

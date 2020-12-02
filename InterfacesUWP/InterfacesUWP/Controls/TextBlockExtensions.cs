@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media;
 
 namespace InterfacesUWP
 {
@@ -14,6 +15,28 @@ namespace InterfacesUWP
     /// </summary>
     public class TextBlockExtensions : DependencyObject
     {
+        /// <summary>
+        /// The raw text property.
+        /// </summary>
+        public static readonly DependencyProperty HyperlinkColorProperty =
+            DependencyProperty.RegisterAttached("HyperlinkColor", typeof(Brush), typeof(TextBlockExtensions), new PropertyMetadata(null, OnRawTextChanged));
+
+        /// <summary>
+        /// Gets the raw text.
+        /// </summary>
+        public static Brush GetHyperlinkColor(DependencyObject obj)
+        {
+            return obj.GetValue(HyperlinkColorProperty) as Brush;
+        }
+
+        /// <summary>
+        /// Sets the raw text.
+        /// </summary>
+        public static void SetHyperlinkColor(DependencyObject obj, Brush value)
+        {
+            obj.SetValue(HyperlinkColorProperty, value);
+        }
+
         /// <summary>
         /// The raw text property.
         /// </summary>
@@ -42,6 +65,8 @@ namespace InterfacesUWP
         private static void OnRawTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             string rawText = GetRawText(d);
+            Brush hyperlinkColor = GetHyperlinkColor(d);
+
             TextBlock tb = d as TextBlock;
             if (tb == null)
             {
@@ -57,7 +82,7 @@ namespace InterfacesUWP
                     return;
                 }
 
-                foreach (var inline in TextToRichInlinesHelper.Convert(rawText))
+                foreach (var inline in TextToRichInlinesHelper.Convert(rawText, hyperlinkColor))
                 {
                     tb.Inlines.Add(inline);
                 }
