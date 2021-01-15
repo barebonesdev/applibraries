@@ -164,7 +164,7 @@
       <Version>2.0.3.2</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Google.Android.Material">
-      <Version>1.1.0.1-rc3</Version>
+      <Version>1.2.1.1</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
